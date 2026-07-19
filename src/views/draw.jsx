@@ -28,20 +28,21 @@ const usePen = () => {
 
 function DrawView({ file, onChange, ctx }) {
   const pen = usePen();
-  const { canvasRef, zoom } = ctx;
+  const { canvasRef, zoom, pan, cameraActive } = ctx;
   const [current, setCurrent] = useState(null);
   const drawing = useRef(false);
 
   const pt = (e) => {
     const el = canvasRef.current;
     const r = el.getBoundingClientRect();
-    return [(e.clientX - r.left + el.scrollLeft) / zoom, (e.clientY - r.top + el.scrollTop) / zoom];
+    return [(e.clientX - r.left - pan.x) / zoom, (e.clientY - r.top - pan.y) / zoom];
   };
   const eraseAt = (p) => {
     const keep = file.strokes.filter((s) => !s.points.some(([x, y]) => (x - p[0]) ** 2 + (y - p[1]) ** 2 < 14 ** 2));
     if (keep.length !== file.strokes.length) onChange({ ...file, strokes: keep });
   };
   const down = (e) => {
+    if (cameraActive?.current) return; // a pinch just took over — don't start a stroke
     drawing.current = true;
     e.currentTarget.setPointerCapture(e.pointerId);
     const p = pt(e);
@@ -49,6 +50,7 @@ function DrawView({ file, onChange, ctx }) {
     else setCurrent({ color: pen.color, size: pen.size, points: [p] });
   };
   const move = (e) => {
+    if (cameraActive?.current) { drawing.current = false; setCurrent(null); return; } // pinch took over mid-stroke
     if (!drawing.current) return;
     const p = pt(e);
     if (pen.eraser) eraseAt(p);
@@ -123,8 +125,12 @@ registerView("core:draw", {
   color: "#EDA6AD",
   zoomable: true,
   canvas: true,
-  version: 1,
-  create: () => ({ settings: { tone: "ink", grid: false, zoom: 1 }, strokes: [] }),
+  version: 2,
+  migrate: (data, fromVersion) => {
+    if (fromVersion === 1) return { ...data, settings: { ...data.settings, pan: data.settings.pan ?? { x: 0, y: 0 } } };
+    return data;
+  },
+  create: () => ({ settings: { tone: "ink", grid: false, zoom: 1, pan: { x: 0, y: 0 } }, strokes: [] }),
   Component: DrawView,
   Overlay: DrawToolbar,
 });

@@ -5,7 +5,7 @@ import { C, MONO, HAND, uid } from "../core/theme.js";
 
 /* ---------- one pinned, draggable module instance ---------- */
 function ModuleCard({ m, ctx, ops }) {
-  const { canvasRef, zoom, isMobile, selection } = ctx;
+  const { canvasRef, zoom, pan, isMobile, selection, cameraActive } = ctx;
   const drag = useRef(null);
   const [hover, setHover] = useState(false);
   const def = MODULE_TYPES[m.type];
@@ -18,9 +18,10 @@ function ModuleCard({ m, ctx, ops }) {
   const ptr = (e) => {
     const el = canvasRef.current;
     const r = el.getBoundingClientRect();
-    return { x: (e.clientX - r.left + el.scrollLeft) / zoom, y: (e.clientY - r.top + el.scrollTop) / zoom };
+    return { x: (e.clientX - r.left - pan.x) / zoom, y: (e.clientY - r.top - pan.y) / zoom };
   };
   const down = (e) => {
+    if (cameraActive?.current) return; // a pinch just took over — don't start a drag
     selection.setSelectedMod(m.id);
     ops.toFront();
     if (m.locked) return;
@@ -30,6 +31,7 @@ function ModuleCard({ m, ctx, ops }) {
     e.currentTarget.setPointerCapture(e.pointerId);
   };
   const move = (e) => {
+    if (cameraActive?.current) { drag.current = null; return; } // pinch took over mid-drag
     if (!drag.current) return;
     const p = ptr(e);
     ops.move(Math.max(0, p.x - drag.current.ox), Math.max(0, p.y - drag.current.oy));
@@ -137,7 +139,11 @@ registerView("core:board", {
   color: "#E8C87A",
   zoomable: true,
   canvas: true,
-  version: 1,
-  create: () => ({ settings: { grid: true, tone: "slate", zoom: 1 }, modules: [] }),
+  version: 2,
+  migrate: (data, fromVersion) => {
+    if (fromVersion === 1) return { ...data, settings: { ...data.settings, pan: data.settings.pan ?? { x: 0, y: 0 } } };
+    return data;
+  },
+  create: () => ({ settings: { grid: true, tone: "slate", zoom: 1, pan: { x: 0, y: 0 } }, modules: [] }),
   Component: BoardView,
 });

@@ -63,7 +63,7 @@ export default function App() {
   const toastT = useRef(null);
   const saveT = useRef(null);
   const zoomApi = useRef({});
-  const pinch = useRef(null);
+  const camActive = useRef(false);
 
   const isMobile = vw < 760;
   const previewOf = active?.startsWith("pv:") ? active.slice(3) : null;
@@ -73,6 +73,7 @@ export default function App() {
   const isBoard = file?.view === "core:board";
   const zoomable = !!view?.zoomable;
   const zoom = zoomable ? file.settings.zoom ?? 1 : 1;
+  const pan = zoomable ? file.settings.pan ?? { x: 0, y: 0 } : { x: 0, y: 0 };
   const canvasish = !!view?.canvas;
   const ext = file?.view === "core:code" ? fileExt(file.name) : "";
 
@@ -111,43 +112,117 @@ export default function App() {
   }, [files, tree, tabs, active, expanded, loaded]);
 
   const updateFile = (id, patch) => setFiles((f) => ({ ...f, [id]: { ...f[id], ...patch } }));
-  const setZoom = (fn) => {
+  /* zoom anchored at a point in canvasRef's local space, so the point under
+     it (cursor, pinch midpoint) stays fixed on screen as zoom changes */
+  const zoomAt = (sx, sy, fn) => {
     const f = zoomApi.current.file;
     if (!f || !FILE_VIEWS[f.view]?.zoomable) return;
-    const z = clampZ(fn(f.settings.zoom ?? 1));
-    updateFile(zoomApi.current.id, { settings: { ...f.settings, zoom: z } });
+    const oldZ = f.settings.zoom ?? 1;
+    const oldPan = f.settings.pan ?? { x: 0, y: 0 };
+    const newZ = clampZ(fn(oldZ));
+    updateFile(zoomApi.current.id, {
+      settings: { ...f.settings, zoom: newZ, pan: { x: sx - (newZ / oldZ) * (sx - oldPan.x), y: sy - (newZ / oldZ) * (sy - oldPan.y) } },
+    });
   };
-  zoomApi.current = { file, id: active };
+  const setZoom = (fn) => {
+    const el = canvasRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    zoomAt(r.width / 2, r.height / 2, fn);
+  };
+  const resetCamera = () => {
+    const f = zoomApi.current.file;
+    if (!f || !FILE_VIEWS[f.view]?.zoomable) return;
+    updateFile(zoomApi.current.id, { settings: { ...f.settings, zoom: 1, pan: { x: 0, y: 0 } } });
+  };
+  zoomApi.current = { file, id: active, canvasish };
 
-  /* ---- ctrl+wheel and pinch zoom (non-passive listeners) ---- */
+  /* ---- camera: click/touch-drag pans, wheel zooms, pinch zooms+pans.
+     A shared pointer count gates everything so a 2nd touch always wins:
+     board's module-drag and draw's stroke-drawing both bail out (see
+     ctx.cameraActive) the instant a pinch starts, instead of racing it. ---- */
   useEffect(() => {
     const el = canvasRef.current;
     if (!el) return;
+    const pts = new Map();
+    let mode = null; // null | "pan" | "pinch"
+    let start = null;
+
+    const settings = () => zoomApi.current.file?.settings ?? {};
+    const commit = (patch) => {
+      const f = zoomApi.current.file;
+      if (!f) return;
+      updateFile(zoomApi.current.id, { settings: { ...f.settings, ...patch } });
+    };
+
     const onWheel = (e) => {
-      if (!e.ctrlKey) return;
+      if (!zoomApi.current.canvasish) return;
       e.preventDefault();
-      setZoom((z) => z * (1 - e.deltaY * 0.0022));
+      const r = el.getBoundingClientRect();
+      zoomAt(e.clientX - r.left, e.clientY - r.top, (z) => z * (1 - e.deltaY * 0.0015));
     };
-    const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
-    const onTS = (e) => {
-      if (e.touches.length === 2) pinch.current = { d: dist(e.touches), z: zoomApi.current.file?.settings?.zoom ?? 1 };
-    };
-    const onTM = (e) => {
-      if (e.touches.length === 2 && pinch.current) {
-        e.preventDefault();
-        setZoom(() => pinch.current.z * (dist(e.touches) / pinch.current.d));
+
+    const onPD = (e) => {
+      if (!zoomApi.current.canvasish) return;
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pts.size >= 2) {
+        camActive.current = true;
+        const [a, b] = [...pts.values()];
+        const s = settings();
+        const zoom = s.zoom ?? 1, pan = s.pan ?? { x: 0, y: 0 };
+        const r = el.getBoundingClientRect();
+        const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+        mode = "pinch";
+        start = {
+          dist: Math.hypot(a.x - b.x, a.y - b.y),
+          zoom,
+          localAnchor: { x: (mid.x - r.left - pan.x) / zoom, y: (mid.y - r.top - pan.y) / zoom },
+        };
+      } else if (pts.size === 1 && e.target.hasAttribute?.("data-cam-bg")) {
+        mode = "pan";
+        start = { x: e.clientX, y: e.clientY, pan: settings().pan ?? { x: 0, y: 0 } };
       }
     };
-    const onTE = () => (pinch.current = null);
+
+    const onPM = (e) => {
+      if (!pts.has(e.pointerId)) return;
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (mode === "pan") {
+        commit({ pan: { x: start.pan.x + (e.clientX - start.x), y: start.pan.y + (e.clientY - start.y) } });
+      } else if (mode === "pinch") {
+        const [a, b] = [...pts.values()];
+        const r = el.getBoundingClientRect();
+        const dist = Math.hypot(a.x - b.x, a.y - b.y);
+        const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+        const newZoom = clampZ(start.zoom * (dist / start.dist));
+        commit({
+          zoom: newZoom,
+          pan: { x: mid.x - r.left - newZoom * start.localAnchor.x, y: mid.y - r.top - newZoom * start.localAnchor.y },
+        });
+      }
+    };
+
+    const endPointer = (e) => {
+      pts.delete(e.pointerId);
+      if (pts.size === 0) { mode = null; camActive.current = false; }
+      else if (pts.size === 1 && mode === "pinch") {
+        const [p] = [...pts.values()];
+        mode = "pan";
+        start = { x: p.x, y: p.y, pan: settings().pan ?? { x: 0, y: 0 } };
+      }
+    };
+
     el.addEventListener("wheel", onWheel, { passive: false });
-    el.addEventListener("touchstart", onTS, { passive: false });
-    el.addEventListener("touchmove", onTM, { passive: false });
-    el.addEventListener("touchend", onTE);
+    el.addEventListener("pointerdown", onPD, { capture: true });
+    el.addEventListener("pointermove", onPM, { capture: true });
+    el.addEventListener("pointerup", endPointer, { capture: true });
+    el.addEventListener("pointercancel", endPointer, { capture: true });
     return () => {
       el.removeEventListener("wheel", onWheel);
-      el.removeEventListener("touchstart", onTS);
-      el.removeEventListener("touchmove", onTM);
-      el.removeEventListener("touchend", onTE);
+      el.removeEventListener("pointerdown", onPD, { capture: true });
+      el.removeEventListener("pointermove", onPM, { capture: true });
+      el.removeEventListener("pointerup", endPointer, { capture: true });
+      el.removeEventListener("pointercancel", endPointer, { capture: true });
     };
   }, [loaded]);
 
@@ -190,7 +265,8 @@ export default function App() {
 
   /* ctx handed to view Components and Overlays */
   const ctx = {
-    files, activeId: active, updateFile, canvasRef, zoom, isMobile, say, openFile,
+    files, activeId: active, updateFile, canvasRef, zoom, pan, isMobile, say, openFile,
+    cameraActive: camActive,
     selection: { selectedMod, setSelectedMod, settingsFor, setSettingsFor },
   };
 
@@ -213,7 +289,7 @@ export default function App() {
   const viewItems = [
     { label: "Zoom in", act: () => setZoom((z) => z * 1.2), dis: !zoomable },
     { label: "Zoom out", act: () => setZoom((z) => z / 1.2), dis: !zoomable },
-    { label: "Reset zoom", act: () => setZoom(() => 1), dis: !zoomable },
+    { label: "Reset zoom", act: resetCamera, dis: !zoomable },
     { sep: true },
     { label: "Dot grid", check: !!file?.settings?.grid, act: () => updateFile(active, { settings: { ...file.settings, grid: !file.settings.grid } }), dis: !canvasish },
     { sep: true },
@@ -355,14 +431,14 @@ export default function App() {
           {/* viewport */}
           <div style={{ flex: 1, position: "relative", minHeight: 0, display: "flex" }}>
             <div ref={canvasRef}
-              style={{ flex: 1, overflow: previewOf || view?.fixed ? "hidden" : "auto", position: "relative", background: file ? (canvasish ? TONES[file.settings.tone ?? "slate"] : C.bg) : C.bg, WebkitOverflowScrolling: "touch" }}
+              style={{ flex: 1, overflow: previewOf || view?.fixed || canvasish ? "hidden" : "auto", position: "relative", background: file ? (canvasish ? TONES[file.settings.tone ?? "slate"] : C.bg) : C.bg, touchAction: canvasish ? "none" : undefined, WebkitOverflowScrolling: "touch" }}
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 const type = e.dataTransfer.getData("module");
                 if (!type || !file) return;
                 const el = canvasRef.current;
                 const r = el.getBoundingClientRect();
-                addModule(type, (e.clientX - r.left + el.scrollLeft) / zoom - 90, (e.clientY - r.top + el.scrollTop) / zoom - 20);
+                addModule(type, (e.clientX - r.left - pan.x) / zoom - 90, (e.clientY - r.top - pan.y) / zoom - 20);
               }}>
               {!file && !previewOf && (
                 <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, padding: 20, textAlign: "center" }}>
@@ -375,11 +451,10 @@ export default function App() {
                 </div>
               )}
               {file && canvasish && ViewComponent && (
-                <div style={{ width: CANVAS_W * zoom, height: CANVAS_H * zoom }}>
-                  <div style={{ width: CANVAS_W, height: CANVAS_H, transform: `scale(${zoom})`, transformOrigin: "0 0", position: "relative", ...gridBg }}
-                    onPointerDown={(e) => { if (e.target === e.currentTarget) { setSelectedMod(null); setSettingsFor(null); } }}>
-                    <ViewComponent file={file} ctx={ctx} onChange={(f) => setFiles((fs) => ({ ...fs, [active]: f }))} />
-                  </div>
+                <div data-cam-bg="1"
+                  style={{ position: "absolute", top: 0, left: 0, width: CANVAS_W, height: CANVAS_H, transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: "0 0", cursor: "grab", ...gridBg }}
+                  onPointerDown={(e) => { if (e.target === e.currentTarget) { setSelectedMod(null); setSettingsFor(null); } }}>
+                  <ViewComponent file={file} ctx={ctx} onChange={(f) => setFiles((fs) => ({ ...fs, [active]: f }))} />
                 </div>
               )}
               {file && !canvasish && ViewComponent && (
@@ -396,7 +471,7 @@ export default function App() {
               <div style={{ position: "absolute", bottom: 12, right: 14, zIndex: 30, display: "flex", alignItems: "center", gap: 2, background: C.panel, border: `1px solid ${C.line}`, borderRadius: 9, padding: 3, boxShadow: "0 8px 22px rgba(0,0,0,.45)" }}>
                 <button onClick={() => setZoom((z) => z / 1.2)} title="Zoom out"
                   style={{ background: "none", border: "none", color: C.dim, cursor: "pointer", display: "flex", padding: 8, borderRadius: 6 }}><Icn d={I.minus} size={12} stroke={2} /></button>
-                <button onClick={() => setZoom(() => 1)} title="Reset zoom"
+                <button onClick={resetCamera} title="Reset zoom"
                   style={{ background: "none", border: "none", color: C.text, cursor: "pointer", fontSize: 11, fontFamily: MONO, padding: "6px 6px", minWidth: 44 }}>
                   {Math.round(zoom * 100)}%
                 </button>
