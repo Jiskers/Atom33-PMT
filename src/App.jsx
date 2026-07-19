@@ -165,6 +165,17 @@ export default function App() {
     const onPD = (e) => {
       if (!zoomApi.current.canvasish) return;
       pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (e.pointerType === "mouse" && e.button === 1) {
+        // middle-click drag always pans, regardless of what's underneath —
+        // the one mouse-based pan gesture that can't collide with drawing
+        // or module-dragging, both of which only respond to the primary button.
+        e.preventDefault();
+        camActive.current = true;
+        mode = "pan";
+        start = { x: e.clientX, y: e.clientY, pan: settings().pan ?? { x: 0, y: 0 } };
+        el.style.cursor = "grabbing";
+        return;
+      }
       if (pts.size >= 2) {
         camActive.current = true;
         const [a, b] = [...pts.values()];
@@ -204,7 +215,7 @@ export default function App() {
 
     const endPointer = (e) => {
       pts.delete(e.pointerId);
-      if (pts.size === 0) { mode = null; camActive.current = false; }
+      if (pts.size === 0) { mode = null; camActive.current = false; el.style.cursor = ""; }
       else if (pts.size === 1 && mode === "pinch") {
         const [p] = [...pts.values()];
         mode = "pan";
