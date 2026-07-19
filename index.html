@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <!-- maximum-scale=1 stops the OS from zooming the whole UI on input focus;
+         the app provides its own canvas zoom. viewport-fit=cover is for
+         notched phones once this runs inside Capacitor. -->
+    <title>devboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&family=Caveat:wght@500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * { box-sizing: border-box; }
+      html, body, #root { height: 100%; margin: 0; }
+      body { overscroll-behavior: none; }
+      ::-webkit-scrollbar { width: 9px; height: 9px; }
+      ::-webkit-scrollbar-thumb { background: #2e333d; border-radius: 5px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      input:focus-visible, textarea:focus-visible, button:focus-visible {
+        outline: 1.5px solid #e8c87a; outline-offset: 1px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

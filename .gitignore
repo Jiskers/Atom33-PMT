@@ -1,0 +1,6 @@
+node_modules/
+dist/
+src-tauri/target/
+android/
+ios/
+.DS_Store
