@@ -11,6 +11,14 @@
      label:    string        palette name
      desc:     string        palette description
      w:        number        default pinned width (px)
+     version:  number?       data schema version, default 1
+     migrate:  (data, fromVersion) => data
+                             upgrades `data` by exactly one
+                             version (fromVersion → fromVersion+1).
+                             Required only once `version` > 1.
+                             See core/migrations.js — bump version
+                             and add this instead of changing an
+                             existing shape in place.
      create:   () => data    starting data for a new instance
      Body:     Component     ({ m, onData }) card contents
      Settings: Component?    ({ m, onData, onPatch }) shown in
@@ -29,6 +37,11 @@
      fixed:     bool?        view manages its own scrolling
                              (core disables outer scroll)
      newName:   string?      default filename (else "untitled <label>")
+     version:   number?      file body schema version, default 1
+     migrate:   (data, fromVersion) => data
+                             same contract as a module's migrate,
+                             applied to the file body (everything
+                             create() returns — not name/view)
      create:    () => data   starting file body
      Component: Component    ({ file, onChange, ctx })
      Overlay:   Component?   floating chrome over the viewport

@@ -137,6 +137,7 @@ registerView("board", {
   color: "#E8C87A",
   zoomable: true,
   canvas: true,
+  version: 1,
   create: () => ({ settings: { grid: true, tone: "slate", zoom: 1 }, modules: [] }),
   Component: BoardView,
 });

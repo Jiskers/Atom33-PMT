@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { MODULE_TYPES, FILE_VIEWS } from "./core/registry.js";
 import { storage } from "./core/storage.js";
+import { migrateProject, PROJECT_SCHEMA_VERSION } from "./core/migrations.js";
 import { seedFiles, seedTree, seedTabs, seedExpanded } from "./core/seed.js";
 import { I, Icn } from "./core/icons.jsx";
 import { C, STICKY, TONES, CANVAS_W, CANVAS_H, clampZ, uid, fileExt, KNOWN_EXTS, MONO, SANS, HAND } from "./core/theme.js";
@@ -78,7 +79,7 @@ export default function App() {
   /* ---- load persisted project on boot ---- */
   useEffect(() => {
     (async () => {
-      const saved = await storage.load();
+      const saved = migrateProject(await storage.load());
       if (saved?.files && saved?.tree) {
         setFiles(saved.files);
         setTree(saved.tree);
@@ -103,7 +104,7 @@ export default function App() {
     setSaveState({ status: "saving" });
     clearTimeout(saveT.current);
     saveT.current = setTimeout(async () => {
-      await storage.save({ files, tree, tabs, active, expanded: [...expanded] });
+      await storage.save({ schemaVersion: PROJECT_SCHEMA_VERSION, files, tree, tabs, active, expanded: [...expanded] });
       setSaveState({ status: "saved", at: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) });
     }, 650);
     return () => clearTimeout(saveT.current);

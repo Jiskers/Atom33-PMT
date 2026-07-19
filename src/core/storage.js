@@ -15,9 +15,14 @@
 
    The project shape is already sync-friendly: `files` is a map
    of id → file, so a sync layer diffs per-file, not per-project.
+
+   Schema versioning lives INSIDE the saved payload (schemaVersion,
+   plus per-file/per-module `v`), not in this key — see
+   core/migrations.js. That's what lets the app upgrade old saves
+   forward instead of orphaning them under a new key.
    ============================================================ */
 
-const KEY = "devboard:project:v1";
+const KEY = "devboard:project";
 
 export const storage = {
   async load() {

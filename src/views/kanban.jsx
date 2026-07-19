@@ -94,6 +94,7 @@ registerView("kanban", {
   color: "#93C5E8",
   zoomable: false,
   canvas: false,
+  version: 1,
   create: () => ({
     settings: {},
     columns: [

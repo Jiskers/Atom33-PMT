@@ -115,6 +115,7 @@ registerView("sheet", {
   color: "#A8D8B0",
   zoomable: false,
   canvas: false,
+  version: 1,
   create: () => ({ settings: {}, cells: {} }),
   Component: SheetView,
 });

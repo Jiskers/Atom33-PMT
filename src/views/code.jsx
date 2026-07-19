@@ -107,6 +107,7 @@ registerView("code", {
   canvas: false,
   fixed: true,
   newName: "untitled.html",
+  version: 1,
   create: () => ({ settings: {}, code: "" }),
   Component: CodeView,
   headerAction: RunButton,

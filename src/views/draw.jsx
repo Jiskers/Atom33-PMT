@@ -123,6 +123,7 @@ registerView("draw", {
   color: "#EDA6AD",
   zoomable: true,
   canvas: true,
+  version: 1,
   create: () => ({ settings: { tone: "ink", grid: false, zoom: 1 }, strokes: [] }),
   Component: DrawView,
   Overlay: DrawToolbar,

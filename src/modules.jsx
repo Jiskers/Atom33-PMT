@@ -16,6 +16,7 @@ registerModule("note", {
   label: "Sticky note",
   desc: "Quick thought, pinned to the board",
   w: 200,
+  version: 1,
   create: () => ({ text: "" }),
   Body: ({ m, onData }) => (
     <div style={{ background: STICKY[m.tint ?? 0], padding: "14px 12px 16px", minHeight: 120 }}>
@@ -73,6 +74,7 @@ registerModule("checklist", {
   label: "Checklist",
   desc: "Small task list with checkboxes",
   w: 230,
+  version: 1,
   create: () => ({ title: "New checklist", items: [], hideDone: false }),
   Body: ChecklistBody,
   Settings: ({ m, onData }) => (
@@ -90,6 +92,7 @@ registerModule("mechanic", {
   label: "Mechanic card",
   desc: "Game mechanic: idea → prototype → fun",
   w: 240,
+  version: 1,
   create: () => ({ name: "New mechanic", hook: "", status: 0 }),
   Body: ({ m, onData }) => {
     const s = m.data.status;
@@ -128,6 +131,7 @@ registerModule("ref", {
   label: "Reference pin",
   desc: "Palette / mood / image placeholder",
   w: 200,
+  version: 1,
   create: () => ({ caption: "reference", colors: ["#B34233", "#2E6E6A", "#E8C87A"] }),
   Body: ({ m, onData }) => (
     <div style={{ background: "#23262E", padding: 8 }}>
