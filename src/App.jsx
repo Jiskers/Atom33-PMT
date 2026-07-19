@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { MODULE_TYPES, FILE_VIEWS } from "./core/registry.js";
 import { storage } from "./core/storage.js";
 import { migrateProject, PROJECT_SCHEMA_VERSION } from "./core/migrations.js";
+import { checkForUpdate, installUpdateAndRestart } from "./core/updater.js";
 import { seedFiles, seedTree, seedTabs, seedExpanded } from "./core/seed.js";
 import { I, Icn } from "./core/icons.jsx";
 import { C, STICKY, TONES, CANVAS_W, CANVAS_H, clampZ, uid, fileExt, KNOWN_EXTS, MONO, SANS, HAND } from "./core/theme.js";
@@ -58,6 +59,7 @@ export default function App() {
   const [settingsFor, setSettingsFor] = useState(null);
   const [saveState, setSaveState] = useState({ status: "saved", at: "—" });
   const [drawer, setDrawer] = useState(null);
+  const [update, setUpdate] = useState(null);
   const [vw, setVw] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
   const canvasRef = useRef(null);
   const toastT = useRef(null);
@@ -242,6 +244,16 @@ export default function App() {
     clearTimeout(toastT.current);
     toastT.current = setTimeout(() => setToast(null), 3000);
   };
+  const checkUpdates = async (silent) => {
+    const u = await checkForUpdate();
+    setUpdate(u);
+    if (u) say(`Update v${u.version} available — File → Install update & restart`);
+    else if (!silent) say("You're on the latest version");
+  };
+  /* ---- silent update check on launch (only speaks up if one's found) ---- */
+  useEffect(() => {
+    if (loaded) checkUpdates(true);
+  }, [loaded]);
   const toggle = (id) => setExpanded((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const openFile = (id) => {
     setTabs((t) => (t.includes(id) ? t : [...t, id]));
@@ -288,6 +300,9 @@ export default function App() {
     ...Object.entries(FILE_VIEWS).map(([k, v]) => ({ label: `New ${v.label}`, act: () => newFile(k) })),
     { sep: true },
     { label: "Close tab", act: () => closeTab(active), dis: !active },
+    { sep: true },
+    { label: "Check for updates", act: () => checkUpdates(false) },
+    ...(update ? [{ label: `Install update v${update.version} & restart`, act: () => installUpdateAndRestart(update) }] : []),
     { sep: true },
     { label: "Reset project…", act: async () => { await storage.reset(); location.reload(); } },
   ];
