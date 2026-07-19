@@ -16,7 +16,7 @@
    ============================================================ */
 import { MODULE_TYPES, FILE_VIEWS } from "./registry.js";
 
-export const PROJECT_SCHEMA_VERSION = 1;
+export const PROJECT_SCHEMA_VERSION = 2;
 
 function migrateModule(m) {
   const def = MODULE_TYPES[m.type];
@@ -49,7 +49,26 @@ function migrateFile(f) {
 
 // Structural changes to the top-level project envelope (files/tree/tabs/
 // active/expanded shape itself) go here, keyed by the version migrating FROM.
-function migrateProjectShape(project, _fromVersion) {
+// Runs BEFORE migrateFile/migrateModule, so ids are already correct by the
+// time those look plugins up in the registry.
+const V1_ID_RENAMES = {
+  views: { board: "core:board", kanban: "core:kanban", sheet: "core:sheet", draw: "core:draw", code: "core:code" },
+  modules: { note: "core:note", checklist: "core:checklist", mechanic: "core:mechanic", ref: "core:ref" },
+};
+
+function migrateProjectShape(project, fromVersion) {
+  if (fromVersion === 1) {
+    // v1 -> v2: built-in module/view ids became namespaced ("board" ->
+    // "core:board") so community plugins can't collide with them on a bare name.
+    const files = Object.fromEntries(
+      Object.entries(project.files ?? {}).map(([id, f]) => {
+        const view = V1_ID_RENAMES.views[f.view] ?? f.view;
+        const modules = f.modules?.map((m) => ({ ...m, type: V1_ID_RENAMES.modules[m.type] ?? m.type }));
+        return [id, modules ? { ...f, view, modules } : { ...f, view }];
+      })
+    );
+    return { ...project, files };
+  }
   return project;
 }
 

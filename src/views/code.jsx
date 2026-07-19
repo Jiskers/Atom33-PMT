@@ -8,7 +8,7 @@ import { C, MONO, SANS, fileExt, RUNNABLE } from "../core/theme.js";
    The real app would resolve full relative paths through
    the folder tree; name-matching covers the common case. */
 export const buildSrcdoc = (files, fileId) => {
-  const codeFiles = Object.values(files).filter((f) => f.view === "code");
+  const codeFiles = Object.values(files).filter((f) => f.view === "core:code");
   let html = files[fileId]?.code ?? "";
   html = html.replace(/<link\b[^>]*href=["']([^"']+)["'][^>]*>/gi, (mt, href) => {
     const f = codeFiles.find((cf) => cf.name === href || cf.name === href.split("/").pop());
@@ -99,7 +99,7 @@ function RunButton({ file, ctx }) {
   );
 }
 
-registerView("code", {
+registerView("core:code", {
   label: "code",
   icon: I.code,
   color: "#C9B0E8",

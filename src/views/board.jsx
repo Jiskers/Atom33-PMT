@@ -131,7 +131,7 @@ function BoardView({ file, onChange, ctx }) {
   );
 }
 
-registerView("board", {
+registerView("core:board", {
   label: "board",
   icon: I.board,
   color: "#E8C87A",

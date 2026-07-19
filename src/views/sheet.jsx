@@ -109,7 +109,7 @@ function SheetView({ file, onChange, ctx }) {
   );
 }
 
-registerView("sheet", {
+registerView("core:sheet", {
   label: "sheet",
   icon: I.sheet,
   color: "#A8D8B0",

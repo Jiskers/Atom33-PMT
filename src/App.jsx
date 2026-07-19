@@ -36,7 +36,7 @@ function TreeNode({ node, depth, files, expanded, toggle, openFile, activeId }) 
   return (
     <div onClick={() => openFile(node.id)}
       style={{ display: "flex", alignItems: "center", gap: 7, padding: `7px 8px 7px ${pad + 15}px`, cursor: "pointer", fontSize: 12.5, borderRadius: 5, color: isActive ? C.text : C.dim, background: isActive ? C.panel2 : "transparent" }}>
-      <span style={{ color: f.view === "code" ? KNOWN_EXTS[ext] ?? v.color : v.color, display: "flex" }}>
+      <span style={{ color: f.view === "core:code" ? KNOWN_EXTS[ext] ?? v.color : v.color, display: "flex" }}>
         <Icn d={v.icon} size={12} />
       </span>
       <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
@@ -70,11 +70,11 @@ export default function App() {
   const file = previewOf ? null : files[active];
   const previewFile = previewOf ? files[previewOf] : null;
   const view = file ? FILE_VIEWS[file.view] : null;
-  const isBoard = file?.view === "board";
+  const isBoard = file?.view === "core:board";
   const zoomable = !!view?.zoomable;
   const zoom = zoomable ? file.settings.zoom ?? 1 : 1;
   const canvasish = !!view?.canvas;
-  const ext = file?.view === "code" ? fileExt(file.name) : "";
+  const ext = file?.view === "core:code" ? fileExt(file.name) : "";
 
   /* ---- load persisted project on boot ---- */
   useEffect(() => {
@@ -170,7 +170,7 @@ export default function App() {
 
   const addModule = (type, x = 100, y = 100) => {
     if (!file) return say("Open a board file first");
-    if (!isBoard) return say(`Modules pin to board views — this tab is a ${file.view}`);
+    if (!isBoard) return say(`Modules pin to board views — this tab is a ${view.label}`);
     updateFile(active, { modules: [...file.modules, makeModule(type, x, y)] });
     setDrawer(null);
   };
@@ -223,7 +223,7 @@ export default function App() {
     })),
   ];
   const runItems = [
-    { label: "Run file", act: () => runFile(files, active, openFile, say), dis: !file || file.view !== "code" },
+    { label: "Run file", act: () => runFile(files, active, openFile, say), dis: !file || file.view !== "core:code" },
   ];
   const menus = isMobile
     ? { Menu: [...fileItems, { sep: true }, ...editItems, { sep: true }, ...viewItems, { sep: true }, ...runItems] }
@@ -339,13 +339,13 @@ export default function App() {
               </>
             ) : file ? (
               <>
-                <span style={{ color: file.view === "code" ? KNOWN_EXTS[ext] ?? view.color : view.color, display: "flex", flexShrink: 0 }}>
+                <span style={{ color: file.view === "core:code" ? KNOWN_EXTS[ext] ?? view.color : view.color, display: "flex", flexShrink: 0 }}>
                   <Icn d={view.icon} size={13} />
                 </span>
                 <input value={file.name} onChange={(e) => updateFile(active, { name: e.target.value })}
-                  style={{ background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 13, fontWeight: 600, fontFamily: file.view === "code" ? MONO : SANS, flex: 1, minWidth: 0 }} />
+                  style={{ background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 13, fontWeight: 600, fontFamily: file.view === "core:code" ? MONO : SANS, flex: 1, minWidth: 0 }} />
                 {HeaderAction && <HeaderAction file={file} ctx={ctx} />}
-                <span style={{ fontSize: 10, fontFamily: MONO, color: C.faint, border: `1px solid ${C.line}`, padding: "1px 8px", borderRadius: 10, flexShrink: 0 }}>{file.view}</span>
+                <span style={{ fontSize: 10, fontFamily: MONO, color: C.faint, border: `1px solid ${C.line}`, padding: "1px 8px", borderRadius: 10, flexShrink: 0 }}>{view.label}</span>
               </>
             ) : (
               <span style={{ fontSize: 12, color: C.faint }}>no file open</span>
@@ -368,7 +368,7 @@ export default function App() {
                 <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, padding: 20, textAlign: "center" }}>
                   <div style={{ fontFamily: HAND, fontSize: 30, color: C.dim }}>the wall is empty</div>
                   <div style={{ fontSize: 12.5, color: C.faint }}>Open a file from the hierarchy, or start a new board.</div>
-                  <button onClick={() => newFile("board")}
+                  <button onClick={() => newFile("core:board")}
                     style={{ background: C.gold, color: C.ink, border: "none", borderRadius: 6, padding: "10px 18px", fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: SANS }}>
                     New board
                   </button>
@@ -428,7 +428,7 @@ export default function App() {
                 </div>
               );
             })}
-            <button onClick={() => newFile("board")} title="New board tab"
+            <button onClick={() => newFile("core:board")} title="New board tab"
               style={{ background: "none", border: "none", color: C.faint, cursor: "pointer", display: "flex", alignItems: "center", padding: "0 14px" }}>
               <Icn d={I.plus} size={11} />
             </button>

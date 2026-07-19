@@ -88,7 +88,7 @@ function KanbanView({ file, onChange, ctx }) {
   );
 }
 
-registerView("kanban", {
+registerView("core:kanban", {
   label: "kanban",
   icon: I.kanban,
   color: "#93C5E8",

@@ -12,7 +12,7 @@ import { C, STICKY, STATUS, STATUS_COLOR, MONO, SANS, HAND } from "./core/theme.
 const sLabel = { fontSize: 11, color: C.dim, marginBottom: 6 };
 
 /* ---------- sticky note ---------- */
-registerModule("note", {
+registerModule("core:note", {
   label: "Sticky note",
   desc: "Quick thought, pinned to the board",
   w: 200,
@@ -70,7 +70,7 @@ function ChecklistBody({ m, onData }) {
     </div>
   );
 }
-registerModule("checklist", {
+registerModule("core:checklist", {
   label: "Checklist",
   desc: "Small task list with checkboxes",
   w: 230,
@@ -88,7 +88,7 @@ registerModule("checklist", {
 });
 
 /* ---------- mechanic card ---------- */
-registerModule("mechanic", {
+registerModule("core:mechanic", {
   label: "Mechanic card",
   desc: "Game mechanic: idea → prototype → fun",
   w: 240,
@@ -127,7 +127,7 @@ registerModule("mechanic", {
 });
 
 /* ---------- reference pin ---------- */
-registerModule("ref", {
+registerModule("core:ref", {
   label: "Reference pin",
   desc: "Palette / mood / image placeholder",
   w: 200,

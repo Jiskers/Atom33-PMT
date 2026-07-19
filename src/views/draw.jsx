@@ -117,7 +117,7 @@ function DrawToolbar({ file, onChange }) {
   );
 }
 
-registerView("draw", {
+registerView("core:draw", {
   label: "draw",
   icon: I.pencil,
   color: "#EDA6AD",

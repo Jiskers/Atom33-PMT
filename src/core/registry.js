@@ -6,6 +6,14 @@
    views — it only reads these maps. A community plugin is a
    JS file that imports these two functions and calls them.
 
+   ---- id namespacing ----
+   Every id is "namespace:name" (e.g. "core:note"). The "core:"
+   namespace is reserved for the built-ins in this repo. A
+   community plugin picks its own namespace (author or package
+   name) so two unrelated plugins can never collide on a bare
+   name like "note". Ids without a ":" are rejected at
+   registration time.
+
    ---- registerModule(id, def) ----
    def = {
      label:    string        palette name
@@ -60,12 +68,22 @@
 export const MODULE_TYPES = {};
 export const FILE_VIEWS = {};
 
+const NAMESPACED_ID = /^[a-z0-9][a-z0-9_-]*:[a-z0-9][a-z0-9_-]*$/i;
+
+function assertNamespaced(kind, id) {
+  if (!NAMESPACED_ID.test(id)) {
+    throw new Error(`${kind} id "${id}" must be namespaced as "namespace:name" (e.g. "core:note") — bare ids risk colliding with other plugins.`);
+  }
+}
+
 export function registerModule(id, def) {
+  assertNamespaced("module", id);
   if (MODULE_TYPES[id]) console.warn(`module "${id}" re-registered`);
   MODULE_TYPES[id] = def;
 }
 
 export function registerView(id, def) {
+  assertNamespaced("view", id);
   if (FILE_VIEWS[id]) console.warn(`view "${id}" re-registered`);
   FILE_VIEWS[id] = def;
 }
