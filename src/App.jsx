@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { MODULE_TYPES, FILE_VIEWS } from "./core/registry.js";
 import { storage } from "./core/storage.js";
 import { migrateProject, PROJECT_SCHEMA_VERSION } from "./core/migrations.js";
-import { checkForUpdate, installUpdateAndRestart } from "./core/updater.js";
+import { checkForUpdate, installUpdateAndRestart, getAppVersion } from "./core/updater.js";
 import { seedFiles, seedTree, seedTabs, seedExpanded } from "./core/seed.js";
 import { I, Icn } from "./core/icons.jsx";
 import { C, STICKY, TONES, CANVAS_W, CANVAS_H, clampZ, uid, fileExt, KNOWN_EXTS, MONO, SANS, HAND } from "./core/theme.js";
@@ -60,6 +60,7 @@ export default function App() {
   const [saveState, setSaveState] = useState({ status: "saved", at: "—" });
   const [drawer, setDrawer] = useState(null);
   const [update, setUpdate] = useState(null);
+  const [appVersion, setAppVersion] = useState(__APP_VERSION__);
   const [vw, setVw] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
   const canvasRef = useRef(null);
   const toastT = useRef(null);
@@ -254,6 +255,12 @@ export default function App() {
   useEffect(() => {
     if (loaded) checkUpdates(true);
   }, [loaded]);
+
+  /* ---- real running version (corrects the build-time fallback once a
+     Tauri build can report its own — proof an update actually took) ---- */
+  useEffect(() => {
+    getAppVersion().then(setAppVersion);
+  }, []);
   const toggle = (id) => setExpanded((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const openFile = (id) => {
     setTabs((t) => (t.includes(id) ? t : [...t, id]));
@@ -416,7 +423,8 @@ export default function App() {
             )}
           </div>
         ))}
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 7, fontSize: 11, fontFamily: MONO, color: C.faint, padding: "0 6px" }}>
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10, fontSize: 11, fontFamily: MONO, color: C.faint, padding: "0 6px" }}>
+          <span title="Currently running version — check this after an update to confirm it applied">v{appVersion}</span>
           <span style={{ width: 7, height: 7, borderRadius: "50%", background: saveState.status === "saving" ? C.gold : "#A8D8B0", transition: "background .2s", flexShrink: 0 }} />
           {!isMobile && (saveState.status === "saving" ? "saving…" : `autosaved ${saveState.at}`)}
         </div>

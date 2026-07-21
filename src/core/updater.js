@@ -19,3 +19,12 @@ export async function installUpdateAndRestart(update) {
   const { relaunch } = await import("@tauri-apps/plugin-process");
   await relaunch();
 }
+
+// The version actually running right now — the real Tauri build's own
+// reported version (so a stale bundle can never lie about itself), or the
+// package.json version Vite baked in at build time for the plain web app.
+export async function getAppVersion() {
+  if (!inTauri()) return __APP_VERSION__;
+  const { getVersion } = await import("@tauri-apps/api/app");
+  return getVersion();
+}
