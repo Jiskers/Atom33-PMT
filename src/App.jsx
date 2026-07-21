@@ -105,11 +105,18 @@ export default function App() {
   const [ctxMenu, setCtxMenu] = useState(null);
   const [dragOverId, setDragOverId] = useState(null);
   const [vw, setVw] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
+  const [historyLen, setHistoryLen] = useState({ undo: 0, redo: 0 });
   const canvasRef = useRef(null);
   const toastT = useRef(null);
   const saveT = useRef(null);
   const zoomApi = useRef({});
   const camActive = useRef(false);
+  const undoStack = useRef([]);
+  const redoStack = useRef([]);
+  const lastCommitted = useRef(null); // baseline { files, tree } the next debounced edit diffs from
+  const undoT = useRef(null);
+  const applyingHistory = useRef(false); // true while undo()/redo() itself is setting files/tree
+  const historyApi = useRef({});
 
   const isMobile = vw < 760;
   const previewOf = active?.startsWith("pv:") ? active.slice(3) : null;
@@ -156,6 +163,75 @@ export default function App() {
     }, 650);
     return () => clearTimeout(saveT.current);
   }, [files, tree, tabs, active, expanded, loaded]);
+
+  /* ---- undo/redo: a single history stack over { files, tree } — every
+     view already funnels edits through onChange/updateFile into those two,
+     so this covers board/kanban/sheet/draw/code and tree ops for free.
+     Rapid edits (typing) coalesce into one step via a debounce; a real
+     pause commits the pre-burst state as an undo point. Tabs/active/
+     expanded/camera are deliberately NOT part of history — only content. */
+  useEffect(() => {
+    if (!loaded) return;
+    if (lastCommitted.current === null) { lastCommitted.current = { files, tree }; return; } // baseline right after load
+    if (applyingHistory.current) { applyingHistory.current = false; lastCommitted.current = { files, tree }; return; }
+    if (redoStack.current.length) redoStack.current = []; // any new edit invalidates redo, immediately
+    clearTimeout(undoT.current);
+    undoT.current = setTimeout(() => {
+      undoT.current = null; // this timer has now fired — nothing left pending to flush
+      undoStack.current.push(lastCommitted.current);
+      if (undoStack.current.length > 100) undoStack.current.shift();
+      lastCommitted.current = { files, tree };
+      setHistoryLen({ undo: undoStack.current.length, redo: redoStack.current.length });
+    }, 600);
+    setHistoryLen({ undo: undoStack.current.length, redo: redoStack.current.length });
+  }, [files, tree, loaded]);
+
+  const flushPendingHistory = () => {
+    if (!undoT.current) return;
+    clearTimeout(undoT.current);
+    undoT.current = null;
+    undoStack.current.push(lastCommitted.current);
+    if (undoStack.current.length > 100) undoStack.current.shift();
+    lastCommitted.current = { files, tree };
+  };
+  const undo = () => {
+    flushPendingHistory();
+    if (!undoStack.current.length) return;
+    const prev = undoStack.current.pop();
+    redoStack.current.push({ files, tree });
+    applyingHistory.current = true;
+    setFiles(prev.files);
+    setTree(prev.tree);
+    setSelectedMod(null); setSettingsFor(null);
+    setHistoryLen({ undo: undoStack.current.length, redo: redoStack.current.length });
+  };
+  const redo = () => {
+    if (!redoStack.current.length) return;
+    const next = redoStack.current.pop();
+    undoStack.current.push({ files, tree });
+    applyingHistory.current = true;
+    setFiles(next.files);
+    setTree(next.tree);
+    setSelectedMod(null); setSettingsFor(null);
+    setHistoryLen({ undo: undoStack.current.length, redo: redoStack.current.length });
+  };
+  historyApi.current = { undo, redo };
+
+  /* ---- Ctrl/Cmd+Z / Ctrl+Shift+Z / Ctrl+Y — skipped while an input/
+     textarea/contenteditable has focus, so native in-field text undo
+     (e.g. a half-typed sticky note) isn't hijacked by project-level undo ---- */
+  useEffect(() => {
+    const onKey = (e) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      const el = document.activeElement;
+      if (el?.tagName === "INPUT" || el?.tagName === "TEXTAREA" || el?.isContentEditable) return;
+      const k = e.key.toLowerCase();
+      if (k === "z" && !e.shiftKey) { e.preventDefault(); historyApi.current.undo(); }
+      else if ((k === "z" && e.shiftKey) || k === "y") { e.preventDefault(); historyApi.current.redo(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const updateFile = (id, patch) => setFiles((f) => ({ ...f, [id]: { ...f[id], ...patch } }));
   /* zoom anchored at a point in canvasRef's local space, so the point under
@@ -401,6 +477,9 @@ export default function App() {
     { label: "Reset project…", act: async () => { await storage.reset(); location.reload(); } },
   ];
   const editItems = [
+    { label: "Undo", act: undo, dis: !historyLen.undo },
+    { label: "Redo", act: redo, dis: !historyLen.redo },
+    { sep: true },
     { label: "Straighten module", act: () => patchSel({ rot: 0 }), dis: !selExists },
     { label: "Delete module", act: () => { updateFile(active, { modules: file.modules.filter((m) => m.id !== selectedMod) }); setSelectedMod(null); setSettingsFor(null); }, dis: !selExists },
     { sep: true },

@@ -116,12 +116,12 @@ The UI is already responsive (drawer nav, touch drag, pinch zoom, bottom tabs). 
 
 ## Roadmap
 
-**Phase 1 — solid core (you are here)**
+**Phase 1 — solid core (complete)**
 - [x] Shell: rail, tree, tabs, menus, autosave, zoom
 - [x] Views: board, kanban, sheet, draw, code (+ run preview)
 - [x] Modules: note, checklist, mechanic, ref — via plugin registry
 - [x] File management: rename in tree, delete, move between folders, new folder UI
-- [ ] Undo/redo (single history stack in App; views already funnel changes through one path)
+- [x] Undo/redo (single history stack in App; views already funnel changes through one path)
 
 **Phase 2 — desktop**
 - [ ] Tauri wrapper + fs storage adapter (real files on disk)
@@ -143,7 +143,7 @@ The UI is already responsive (drawer nav, touch drag, pinch zoom, bottom tabs). 
 
 ## Known gaps (honest list)
 
-- No undo/redo yet — the biggest missing daily-driver feature
+- Undo/redo only covers file/tree content — not tabs, active file, expanded folders, or camera pan/zoom
 - Tree drag-to-move only works with a mouse — no touch fallback yet (mirrors the same desktop-only limitation modules have when dragging onto a board)
 - Sheet formulas: only `+ - * / ( )`, refs, and `SUM(range)`
 - Preview resolves linked files by filename, not full relative paths
