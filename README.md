@@ -38,6 +38,9 @@ src/
 └── core/
     ├── registry.js     the plugin contracts (READ THIS FIRST)
     ├── storage.js      persistence adapter (swappable)
+    ├── migrations.js   versioned save-data upgrades, per module/view
+    ├── tree.js         folder/file tree helpers (find, move, delete, rename)
+    ├── updater.js      Tauri auto-updater + running-version wrapper
     ├── seed.js         first-launch example project
     ├── theme.js        design tokens + utilities
     └── icons.jsx       SVG icon set
@@ -117,7 +120,7 @@ The UI is already responsive (drawer nav, touch drag, pinch zoom, bottom tabs). 
 - [x] Shell: rail, tree, tabs, menus, autosave, zoom
 - [x] Views: board, kanban, sheet, draw, code (+ run preview)
 - [x] Modules: note, checklist, mechanic, ref — via plugin registry
-- [ ] File management: rename in tree, delete, move between folders, new folder UI
+- [x] File management: rename in tree, delete, move between folders, new folder UI
 - [ ] Undo/redo (single history stack in App; views already funnel changes through one path)
 
 **Phase 2 — desktop**
@@ -141,7 +144,7 @@ The UI is already responsive (drawer nav, touch drag, pinch zoom, bottom tabs). 
 ## Known gaps (honest list)
 
 - No undo/redo yet — the biggest missing daily-driver feature
-- Tree items can't be renamed/moved/deleted from the tree yet (file rename works via the header)
+- Tree drag-to-move only works with a mouse — no touch fallback yet (mirrors the same desktop-only limitation modules have when dragging onto a board)
 - Sheet formulas: only `+ - * / ( )`, refs, and `SUM(range)`
 - Preview resolves linked files by filename, not full relative paths
 - localStorage cap (~5MB) until the fs adapter lands

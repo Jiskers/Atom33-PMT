@@ -3,27 +3,60 @@ import { MODULE_TYPES, FILE_VIEWS } from "./core/registry.js";
 import { storage } from "./core/storage.js";
 import { migrateProject, PROJECT_SCHEMA_VERSION } from "./core/migrations.js";
 import { checkForUpdate, installUpdateAndRestart, getAppVersion } from "./core/updater.js";
+import { findNode, removeNode, insertNode, moveNode, renameFolder, collectFileIds } from "./core/tree.js";
 import { seedFiles, seedTree, seedTabs, seedExpanded } from "./core/seed.js";
 import { I, Icn } from "./core/icons.jsx";
 import { C, STICKY, TONES, CANVAS_W, CANVAS_H, clampZ, uid, fileExt, KNOWN_EXTS, MONO, SANS, HAND } from "./core/theme.js";
 import { makeModule } from "./views/board.jsx";
 import { PreviewView, runFile } from "./views/code.jsx";
 
+/* ---------- inline rename box, shared by folder + file rows ---------- */
+function RenameInput({ initial, onCommit, onCancel }) {
+  const [v, setV] = useState(initial);
+  const ref = useRef(null);
+  useEffect(() => { ref.current?.focus(); ref.current?.select(); }, []);
+  return (
+    <input ref={ref} value={v} onChange={(e) => setV(e.target.value)}
+      onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") onCommit(v);
+        if (e.key === "Escape") onCancel();
+      }}
+      onBlur={() => onCommit(v)}
+      style={{ background: C.bg, border: `1px solid ${C.gold}`, borderRadius: 4, color: C.text, fontSize: 12.5, fontFamily: SANS, padding: "1px 4px", outline: "none", flex: 1, minWidth: 0 }} />
+  );
+}
+
 /* ---------- folder tree ---------- */
-function TreeNode({ node, depth, files, expanded, toggle, openFile, activeId }) {
+function TreeNode({ node, depth, files, expanded, toggle, openFile, activeId, renaming, startRename, commitRename, cancelRename, onCtxMenu, dragOverId, setDragOverId, onDropNode }) {
   const pad = 10 + depth * 14;
+  const isRenaming = renaming === node.id;
+  const onDragStart = (e) => { e.dataTransfer.setData("text/tree-node", node.id); e.stopPropagation(); };
+
   if (node.kind === "folder") {
     const open = expanded.has(node.id);
     return (
       <div>
-        <div onClick={() => toggle(node.id)}
-          style={{ display: "flex", alignItems: "center", gap: 6, padding: `7px 8px 7px ${pad}px`, cursor: "pointer", color: C.dim, fontSize: 12.5, borderRadius: 5 }}>
-          <span style={{ transform: open ? "rotate(90deg)" : "none", transition: "transform .12s", display: "flex" }}><Icn d={I.chev} size={9} /></span>
+        <div draggable={!isRenaming} onDragStart={onDragStart}
+          onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragOverId(node.id); }}
+          onDragLeave={() => setDragOverId((id) => (id === node.id ? null : id))}
+          onDrop={(e) => { e.preventDefault(); e.stopPropagation(); setDragOverId(null); onDropNode(e.dataTransfer.getData("text/tree-node"), node.id); }}
+          onContextMenu={(e) => onCtxMenu(e, node)}
+          onClick={() => !isRenaming && toggle(node.id)}
+          style={{ display: "flex", alignItems: "center", gap: 6, padding: `7px 8px 7px ${pad}px`, cursor: "pointer", color: C.dim, fontSize: 12.5, borderRadius: 5, background: dragOverId === node.id ? C.panel2 : "transparent" }}>
+          <span style={{ transform: open ? "rotate(90deg)" : "none", transition: "transform .12s", display: "flex", flexShrink: 0 }}><Icn d={I.chev} size={9} /></span>
           <Icn d={I.folder} size={13} />
-          <span style={{ color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{node.name}</span>
+          {isRenaming ? (
+            <RenameInput initial={node.name} onCommit={(v) => commitRename(node.id, v)} onCancel={cancelRename} />
+          ) : (
+            <span onDoubleClick={(e) => { e.stopPropagation(); startRename(node.id); }}
+              style={{ color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{node.name}</span>
+          )}
         </div>
         {open && node.children.map((ch) => (
-          <TreeNode key={ch.id} node={ch} depth={depth + 1} files={files} expanded={expanded} toggle={toggle} openFile={openFile} activeId={activeId} />
+          <TreeNode key={ch.id} node={ch} depth={depth + 1} files={files} expanded={expanded} toggle={toggle} openFile={openFile} activeId={activeId}
+            renaming={renaming} startRename={startRename} commitRename={commitRename} cancelRename={cancelRename}
+            onCtxMenu={onCtxMenu} dragOverId={dragOverId} setDragOverId={setDragOverId} onDropNode={onDropNode} />
         ))}
       </div>
     );
@@ -35,12 +68,19 @@ function TreeNode({ node, depth, files, expanded, toggle, openFile, activeId }) 
   const ext = fileExt(f.name);
   const isActive = activeId === node.id;
   return (
-    <div onClick={() => openFile(node.id)}
+    <div draggable={!isRenaming} onDragStart={onDragStart}
+      onContextMenu={(e) => onCtxMenu(e, node)}
+      onClick={() => !isRenaming && openFile(node.id)}
       style={{ display: "flex", alignItems: "center", gap: 7, padding: `7px 8px 7px ${pad + 15}px`, cursor: "pointer", fontSize: 12.5, borderRadius: 5, color: isActive ? C.text : C.dim, background: isActive ? C.panel2 : "transparent" }}>
-      <span style={{ color: f.view === "core:code" ? KNOWN_EXTS[ext] ?? v.color : v.color, display: "flex" }}>
+      <span style={{ color: f.view === "core:code" ? KNOWN_EXTS[ext] ?? v.color : v.color, display: "flex", flexShrink: 0 }}>
         <Icn d={v.icon} size={12} />
       </span>
-      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
+      {isRenaming ? (
+        <RenameInput initial={f.name} onCommit={(v) => commitRename(node.id, v)} onCancel={cancelRename} />
+      ) : (
+        <span onDoubleClick={(e) => { e.stopPropagation(); startRename(node.id); }}
+          style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
+      )}
     </div>
   );
 }
@@ -61,6 +101,9 @@ export default function App() {
   const [drawer, setDrawer] = useState(null);
   const [update, setUpdate] = useState(null);
   const [appVersion, setAppVersion] = useState(__APP_VERSION__);
+  const [renaming, setRenaming] = useState(null);
+  const [ctxMenu, setCtxMenu] = useState(null);
+  const [dragOverId, setDragOverId] = useState(null);
   const [vw, setVw] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
   const canvasRef = useRef(null);
   const toastT = useRef(null);
@@ -293,6 +336,50 @@ export default function App() {
     openFile(id);
   };
 
+  /* ---- tree: rename / delete / new folder / drag-move ---- */
+  const startRename = (id) => setRenaming(id);
+  const cancelRename = () => setRenaming(null);
+  const commitRename = (id, name) => {
+    setRenaming(null);
+    if (!name.trim()) return;
+    const node = findNode(tree, id);
+    if (node?.kind === "folder") setTree((t) => renameFolder(t, id, name));
+    else updateFile(id, { name: name.trim() });
+  };
+  const newFolder = (parentId = null) => {
+    const id = uid("d");
+    setTree((t) => insertNode(t, { id, kind: "folder", name: "New folder", children: [] }, parentId));
+    if (parentId) setExpanded((s) => new Set(s).add(parentId));
+    setRenaming(id);
+  };
+  const deleteNode = (id) => {
+    const node = findNode(tree, id);
+    if (!node) return;
+    const fileIds = new Set(collectFileIds(node));
+    const label = node.kind === "folder"
+      ? `"${node.name}" and its ${fileIds.size} file${fileIds.size === 1 ? "" : "s"}`
+      : `"${files[id]?.name ?? "this file"}"`;
+    if (!window.confirm(`Delete ${label}? This can't be undone.`)) return;
+    setTree((t) => removeNode(t, id).tree);
+    setFiles((f) => { const n = { ...f }; fileIds.forEach((fid) => delete n[fid]); return n; });
+    setTabs((t) => {
+      const kept = t.filter((tid) => !fileIds.has(tid.startsWith("pv:") ? tid.slice(3) : tid));
+      if (fileIds.has(previewOf ?? active)) setActive(kept[kept.length - 1] ?? null);
+      return kept;
+    });
+    setExpanded((s) => { const n = new Set(s); n.delete(id); fileIds.forEach((fid) => n.delete(fid)); return n; });
+    setSelectedMod(null); setSettingsFor(null); setCtxMenu(null);
+  };
+  const onDropNode = (draggedId, targetParentId) => {
+    if (!draggedId) return;
+    setTree((t) => moveNode(t, draggedId, targetParentId));
+  };
+  const openCtxMenu = (e, node) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCtxMenu({ x: e.clientX, y: e.clientY, node });
+  };
+
   /* ctx handed to view Components and Overlays */
   const ctx = {
     files, activeId: active, updateFile, canvasRef, zoom, pan, isMobile, say, openFile,
@@ -368,18 +455,27 @@ export default function App() {
           Modules and views are plugins — everything here registers through the same contracts community add-ons would use.
         </div>
       </div>
-      <div style={{ flex: isMobile ? "unset" : "1 1 48%", borderTop: isMobile ? "none" : `1px solid ${C.line}`, overflowY: "auto", padding: "12px 10px", minHeight: 0, display: isMobile && drawer !== "files" ? "none" : "block" }}>
+      <div
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => { e.preventDefault(); setDragOverId(null); onDropNode(e.dataTransfer.getData("text/tree-node"), null); }}
+        style={{ flex: isMobile ? "unset" : "1 1 48%", borderTop: isMobile ? "none" : `1px solid ${C.line}`, overflowY: "auto", padding: "12px 10px", minHeight: 0, display: isMobile && drawer !== "files" ? "none" : "block" }}>
         <div style={{ display: "flex", alignItems: "center", padding: "0 4px 8px" }}>
           <span style={{ fontSize: 9.5, letterSpacing: 1.6, textTransform: "uppercase", color: C.faint, fontFamily: MONO }}>project files</span>
-          {Object.entries(FILE_VIEWS).map(([k, v], i) => (
+          <button onClick={() => newFolder(null)} title="New folder"
+            style={{ marginLeft: "auto", background: "none", border: "none", color: C.dim, cursor: "pointer", display: "flex", padding: 4 }}>
+            <Icn d={I.folder} size={12} />
+          </button>
+          {Object.entries(FILE_VIEWS).map(([k, v]) => (
             <button key={k} onClick={() => newFile(k)} title={`New ${v.label}`}
-              style={{ marginLeft: i === 0 ? "auto" : 0, background: "none", border: "none", color: v.color, cursor: "pointer", display: "flex", padding: 4 }}>
+              style={{ background: "none", border: "none", color: v.color, cursor: "pointer", display: "flex", padding: 4 }}>
               <Icn d={v.icon} size={12} />
             </button>
           ))}
         </div>
         {tree.map((n) => (
-          <TreeNode key={n.id} node={n} depth={0} files={files} expanded={expanded} toggle={toggle} openFile={openFile} activeId={active} />
+          <TreeNode key={n.id} node={n} depth={0} files={files} expanded={expanded} toggle={toggle} openFile={openFile} activeId={active}
+            renaming={renaming} startRename={startRename} commitRename={commitRename} cancelRename={cancelRename}
+            onCtxMenu={openCtxMenu} dragOverId={dragOverId} setDragOverId={setDragOverId} onDropNode={onDropNode} />
         ))}
       </div>
     </>
@@ -560,6 +656,29 @@ export default function App() {
               ))}
             </div>
             <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>{railContent}</div>
+          </div>
+        </>
+      )}
+
+      {ctxMenu && (
+        <>
+          <div onClick={() => setCtxMenu(null)} onContextMenu={(e) => { e.preventDefault(); setCtxMenu(null); }}
+            style={{ position: "fixed", inset: 0, zIndex: 90 }} />
+          <div style={{ position: "fixed", top: ctxMenu.y, left: ctxMenu.x, minWidth: 170, background: C.panel, border: `1px solid ${C.line}`, borderRadius: 9, padding: 5, boxShadow: "0 16px 34px rgba(0,0,0,.55)", zIndex: 91 }}>
+            {ctxMenu.node.kind === "folder" && (
+              <button onClick={() => { const id = ctxMenu.node.id; setCtxMenu(null); newFolder(id); }}
+                style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", background: "none", border: "none", color: C.text, fontSize: 12.5, padding: "8px 10px", borderRadius: 6, cursor: "pointer", fontFamily: SANS }}>
+                New folder
+              </button>
+            )}
+            <button onClick={() => { const id = ctxMenu.node.id; setCtxMenu(null); startRename(id); }}
+              style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", background: "none", border: "none", color: C.text, fontSize: 12.5, padding: "8px 10px", borderRadius: 6, cursor: "pointer", fontFamily: SANS }}>
+              Rename
+            </button>
+            <button onClick={() => { const id = ctxMenu.node.id; setCtxMenu(null); deleteNode(id); }}
+              style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", background: "none", border: "none", color: "#E8564A", fontSize: 12.5, padding: "8px 10px", borderRadius: 6, cursor: "pointer", fontFamily: SANS }}>
+              Delete
+            </button>
           </div>
         </>
       )}
