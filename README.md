@@ -1,6 +1,6 @@
 # devboard
 
-A modular, local-first project management app for indie game devs. One codebase → web, desktop (Tauri), mobile (Capacitor).
+A modular, local-first project management app for indie game devs. One codebase → web, desktop, and mobile, all through Tauri (v2 targets both from the same Rust shell — no separate Capacitor project).
 
 Files live in a folder hierarchy. Every file has a **view type** — corkboard, kanban, sheet, draw, or code — opened in tabs. Boards hold **modules** (sticky notes, checklists, mechanic cards, reference pins) you pin anywhere. Everything autosaves locally.
 
@@ -71,13 +71,12 @@ Same idea with `registerView` — see the contract documented in `core/registry.
 
 ### Storage
 
-`core/storage.js` is the only persistence touchpoint: `load()`, `save(project)`, `reset()`. It's localStorage today, which already works inside Tauri and Capacitor webviews. Swap the internals later without touching the app:
+`core/storage.js` is the only persistence touchpoint: `load()`, `save(project)`, `reset()`. It's localStorage today — including inside the Tauri desktop build, which is why Phase 2's fs adapter is still open below. Swap the internals later without touching the app:
 
-- **Desktop:** `@tauri-apps/plugin-fs` — one JSON file per devboard file in the user's documents folder (user-ownable, sync-friendly, backup-friendly)
-- **Mobile:** `@capacitor/filesystem` or the SQLite plugin
-- **Cloud sync:** after each local save, diff-push changed files (by id + timestamp) to Google Drive / Dropbox. The project shape — a map of `id → file` — was chosen so sync is per-file, not per-project.
+- **Desktop + mobile:** `@tauri-apps/plugin-fs` — one JSON file per devboard file under the OS's app-data dir (user-ownable, sync-friendly, backup-friendly). Same plugin, same code path on both, since it's one Tauri shell.
+- **Cloud sync:** after each local save, diff-push changed files (by id + timestamp) to Google Drive's `appDataFolder`. The project shape — a map of `id → file` — was chosen so sync is per-file, not per-project.
 
-localStorage's practical limit is ~5MB. Fine for early use; move to the fs adapter before drawings get big.
+localStorage's practical limit is ~5MB. Fine for early use; move to the fs adapter before drawings get big (Phase 2).
 
 ---
 
@@ -98,19 +97,18 @@ npx tauri dev      # run desktop app
 npx tauri build    # installers (.msi / .dmg / .deb …)
 ```
 
-## Mobile (Capacitor)
+## Mobile (Tauri, deferred — see Phase 3)
+
+Same `src-tauri/` project as desktop — Tauri 2 adds Android/iOS as extra
+build targets rather than a separate framework:
 
 ```bash
-npm install @capacitor/core
-npm install -D @capacitor/cli
-npx cap init devboard com.yourname.devboard --web-dir=dist
-npm run build
-npx cap add android    # and/or: npx cap add ios (macOS only)
-npx cap sync
-npx cap open android   # opens Android Studio; run on device/emulator
+npx tauri android init   # and/or: npx tauri ios init (macOS + Xcode only)
+npx tauri android dev    # run on a device/emulator
+npx tauri android build  # signed .apk / .aab
 ```
 
-The UI is already responsive (drawer nav, touch drag, pinch zoom, bottom tabs). Remaining mobile polish lives in the roadmap.
+The UI is already responsive (drawer nav, touch drag, pinch zoom, bottom tabs) and the camera/pinch-zoom work covers touch. Not actually running this yet, though — see Phase 3 for why.
 
 ---
 
@@ -123,19 +121,29 @@ The UI is already responsive (drawer nav, touch drag, pinch zoom, bottom tabs). 
 - [x] File management: rename in tree, delete, move between folders, new folder UI
 - [x] Undo/redo (single history stack in App; views already funnel changes through one path)
 
-**Phase 2 — desktop**
-- [ ] Tauri wrapper + fs storage adapter (real files on disk)
-- [ ] Native menu bar, window state, file associations
+**Phase 2 — desktop (partially done)**
+- [x] Tauri wrapper: scaffold, `tauri dev`/`tauri build`, signed auto-updater backed by GitHub Releases (checks on launch, File → Check for updates, real version shown in the menu bar)
+- [ ] fs storage adapter — real per-file JSON on disk via `@tauri-apps/plugin-fs` (still localStorage even inside the Tauri build right now; this is also what removes the ~5MB cap below)
+- [ ] Native menu bar, window state persistence, file associations
 
-**Phase 3 — mobile**
-- [ ] Capacitor wrapper, safe-area insets, keyboard avoidance
+**Phase 3 — mobile (decided, deliberately not started)**
+- Decided: Tauri's own Android/iOS targets instead of a separate Capacitor project — one shell, one update mechanism, for desktop and mobile both.
+- Deliberately deferred: the core is still moving fast (undo/redo, tree management, and the camera system all landed in the same week) — shipping to app stores now means a re-submission for every one of those. Revisit once Phase 2 and the Phase 5 page work below settle down.
+- [ ] `tauri android init` / `tauri ios init`, safe-area insets, keyboard avoidance
 - [ ] Two-finger pan while drawing
 
 **Phase 4 — sync & accounts**
-- [ ] Google sign-in + Drive appData sync (per-file, last-write-wins)
+- [ ] Multi-project support: create/load/switch between projects. Storage is currently a single implicit project (one fixed localStorage key) — this needs a project-id-aware key scheme plus a picker UI before "sign in and sync" means anything
+- [ ] Settings/account surface — new UI, doesn't exist yet — to hold Google sign-in and sync status
+- [ ] Google sign-in (system-browser OAuth + loopback redirect — Google blocks embedded webviews for this) + Drive `appDataFolder` sync, per-file, last-write-wins
 - [ ] Conflict copy on clash (rename, never overwrite silently)
 
-**Phase 5 — the fun stuff**
+**Phase 5 — page depth & extensibility**
+- [ ] Modules become per-view instead of board-only: the rail's module palette currently always shows the board module set regardless of which view is open, even though only board can actually place them. Registry + rail should read the *active view's* own module set, so kanban/sheet/draw/code (and the future Home view below) can each bring their own
+- [ ] Sheet: past the fixed 6×16 (A–F, 1–16) grid — bigger and/or resizable
+- [ ] Kanban: custom columns (add/rename/delete/reorder, not just the fixed Backlog/In Progress/Done), plus a Trello-style card detail panel (description, checklist, images) opened from a card
+- [ ] Board + draw: adjustable canvas/workspace size (currently fixed via `CANVAS_W`/`CANVAS_H` in `theme.js`)
+- [ ] New "Home" view: a customizable dashboard/summary page, built on the same per-view-module system above
 - [ ] Game-dev module pack: GDD outline, asset pipeline tracker, bug board, playtest log
 - [ ] php-wasm runtime so Run works for .php
 - [ ] Stable plugin API + docs → community modules/views
@@ -145,6 +153,5 @@ The UI is already responsive (drawer nav, touch drag, pinch zoom, bottom tabs). 
 
 - Undo/redo only covers file/tree content — not tabs, active file, expanded folders, or camera pan/zoom
 - Tree drag-to-move only works with a mouse — no touch fallback yet (mirrors the same desktop-only limitation modules have when dragging onto a board)
-- Sheet formulas: only `+ - * / ( )`, refs, and `SUM(range)`
+- Sheet formulas: only `+ - * / ( )`, refs, and `SUM(range)` — grid size is tracked in Phase 5, formula depth isn't yet
 - Preview resolves linked files by filename, not full relative paths
-- localStorage cap (~5MB) until the fs adapter lands
