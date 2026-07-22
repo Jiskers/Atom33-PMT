@@ -37,7 +37,11 @@ src/
 │   └── code.jsx        editor + Run → browser-chrome preview tab
 └── core/
     ├── registry.js     the plugin contracts (READ THIS FIRST)
-    ├── storage.js      persistence adapter (swappable)
+    ├── storage.js      persistence adapter — localStorage (web) or
+    │                   real per-file JSON on disk (Tauri), picked
+    │                   by env.js at import time
+    ├── env.js          inTauri() — the one runtime check everything
+    │                   else (storage, updater) branches on
     ├── migrations.js   versioned save-data upgrades, per module/view
     ├── tree.js         folder/file tree helpers (find, move, delete, rename)
     ├── updater.js      Tauri auto-updater + running-version wrapper
@@ -71,12 +75,11 @@ Same idea with `registerView` — see the contract documented in `core/registry.
 
 ### Storage
 
-`core/storage.js` is the only persistence touchpoint: `load()`, `save(project)`, `reset()`. It's localStorage today — including inside the Tauri desktop build, which is why Phase 2's fs adapter is still open below. Swap the internals later without touching the app:
+`core/storage.js` is the only persistence touchpoint: `load()`, `save(project)`, `reset()`. App.jsx always hands `save()` the whole project object — the adapter itself decides what actually needs writing, so callers never change no matter which backend is picked at import time (`inTauri()`, from `core/env.js`):
 
-- **Desktop + mobile:** `@tauri-apps/plugin-fs` — one JSON file per devboard file under the OS's app-data dir (user-ownable, sync-friendly, backup-friendly). Same plugin, same code path on both, since it's one Tauri shell.
-- **Cloud sync:** after each local save, diff-push changed files (by id + timestamp) to Google Drive's `appDataFolder`. The project shape — a map of `id → file` — was chosen so sync is per-file, not per-project.
-
-localStorage's practical limit is ~5MB. Fine for early use; move to the fs adapter before drawings get big (Phase 2).
+- **Web (plain browser):** one localStorage blob, capped around ~5MB.
+- **Desktop + mobile (real, not aspirational):** `@tauri-apps/plugin-fs` — one JSON file per devboard file under `$APPDATA/files/<id>.json`, plus a `project.json` manifest for everything else (tree, tabs, active, expanded). Same plugin, same code path on both, since it's one Tauri shell. Per-file writes only touch files that actually changed (diffed against an in-memory cache of what's already on disk) — no size cap, and it's already the shape a sync layer needs.
+- **Cloud sync (not built yet):** after each local save, diff-push changed files (by id + timestamp) to Google Drive's `appDataFolder`.
 
 ---
 
@@ -123,7 +126,7 @@ The UI is already responsive (drawer nav, touch drag, pinch zoom, bottom tabs) a
 
 **Phase 2 — desktop (partially done)**
 - [x] Tauri wrapper: scaffold, `tauri dev`/`tauri build`, signed auto-updater backed by GitHub Releases (checks on launch, File → Check for updates, real version shown in the menu bar)
-- [ ] fs storage adapter — real per-file JSON on disk via `@tauri-apps/plugin-fs` (still localStorage even inside the Tauri build right now; this is also what removes the ~5MB cap below)
+- [x] fs storage adapter — real per-file JSON on disk via `@tauri-apps/plugin-fs` under `$APPDATA` (`project.json` manifest + `files/<id>.json`), diffed against an in-memory cache so autosave only writes what changed. Verified round-trip: edited a file directly on disk, relaunched, the edit survived and re-saved correctly instead of reverting to seed data
 - [ ] Native menu bar, window state persistence, file associations
 
 **Phase 3 — mobile (decided, deliberately not started)**

@@ -6,7 +6,7 @@
    web server) since the plugin IPC bridge only exists inside a
    Tauri webview — lets App.jsx call this unconditionally.
    ============================================================ */
-const inTauri = () => typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+import { inTauri } from "./env.js";
 
 export async function checkForUpdate() {
   if (!inTauri()) return null;
