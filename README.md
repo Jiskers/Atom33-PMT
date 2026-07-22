@@ -136,7 +136,7 @@ The UI is already responsive (drawer nav, touch drag, pinch zoom, bottom tabs) a
 - [ ] Two-finger pan while drawing
 
 **Phase 4 — sync & accounts**
-- [ ] Multi-project support: create/load/switch between projects. Storage is currently a single implicit project (one fixed localStorage key) — this needs a project-id-aware key scheme plus a picker UI before "sign in and sync" means anything
+- [x] Multi-project support: File → New/Rename/switch between projects. storage.js now tracks a project registry (`projects.json` on Tauri, `devboard:projects` on web) with each project's data keyed by id; existing single-project installs migrate automatically into "project 1" the first time they load. No delete-project yet.
 - [ ] Settings/account surface — new UI, doesn't exist yet — to hold Google sign-in and sync status
 - [ ] Google sign-in (system-browser OAuth + loopback redirect — Google blocks embedded webviews for this) + Drive `appDataFolder` sync, per-file, last-write-wins
 - [ ] Conflict copy on clash (rename, never overwrite silently)

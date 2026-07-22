@@ -103,6 +103,8 @@ export default function App() {
   const [appVersion, setAppVersion] = useState(__APP_VERSION__);
   const [renaming, setRenaming] = useState(null);
   const [ctxMenu, setCtxMenu] = useState(null);
+  const [projects, setProjects] = useState([]);
+  const [activeProjectId, setActiveProjectIdState] = useState(null);
   const [dragOverId, setDragOverId] = useState(null);
   const [vw, setVw] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
   const [historyLen, setHistoryLen] = useState({ undo: 0, redo: 0 });
@@ -130,20 +132,58 @@ export default function App() {
   const canvasish = !!view?.canvas;
   const ext = file?.view === "core:code" ? fileExt(file.name) : "";
 
+  /* ---- apply a loaded project's data into state (boot + project switch) ---- */
+  const applyLoaded = (saved) => {
+    if (saved?.files && saved?.tree) {
+      setFiles(saved.files);
+      setTree(saved.tree);
+      setTabs(saved.tabs ?? []);
+      setActive(saved.active ?? saved.tabs?.[0] ?? null);
+      setExpanded(new Set(saved.expanded ?? []));
+    }
+  };
+
   /* ---- load persisted project on boot ---- */
   useEffect(() => {
     (async () => {
-      const saved = migrateProject(await storage.load());
-      if (saved?.files && saved?.tree) {
-        setFiles(saved.files);
-        setTree(saved.tree);
-        setTabs(saved.tabs ?? []);
-        setActive(saved.active ?? saved.tabs?.[0] ?? null);
-        setExpanded(new Set(saved.expanded ?? []));
-      }
+      applyLoaded(migrateProject(await storage.load()));
       setLoaded(true);
     })();
   }, []);
+
+  /* ---- project list + multi-project management ---- */
+  const refreshProjects = async () => {
+    setProjects(await storage.listProjects());
+    setActiveProjectIdState(await storage.getActiveProjectId());
+  };
+  useEffect(() => {
+    if (loaded) refreshProjects();
+  }, [loaded]);
+
+  const switchProject = async (id) => {
+    if (id === activeProjectId) return;
+    await storage.setActiveProjectId(id);
+    undoStack.current = [];
+    redoStack.current = [];
+    lastCommitted.current = null;
+    setSelectedMod(null); setSettingsFor(null); setMenuOpen(null); setCtxMenu(null); setRenaming(null); setDragOverId(null);
+    applyLoaded(migrateProject(await storage.load()));
+    setActiveProjectIdState(id);
+  };
+  const newProject = async () => {
+    const name = window.prompt("Project name:", "My Project");
+    if (name === null) return;
+    const id = await storage.createProject(name);
+    await refreshProjects();
+    await switchProject(id);
+  };
+  const renameProjectPrompt = async () => {
+    const cur = projects.find((p) => p.id === activeProjectId);
+    const name = window.prompt("Rename project:", cur?.name ?? "");
+    if (name === null || !name.trim()) return;
+    await storage.renameProject(activeProjectId, name.trim());
+    await refreshProjects();
+  };
 
   /* ---- window resize ---- */
   useEffect(() => {
@@ -467,6 +507,11 @@ export default function App() {
   const selExists = isBoard && file?.modules.some((m) => m.id === selectedMod);
   const patchSel = (patch) => updateFile(active, { modules: file.modules.map((m) => (m.id === selectedMod ? { ...m, ...patch } : m)) });
   const fileItems = [
+    { label: "New project…", act: newProject },
+    { label: "Rename project…", act: renameProjectPrompt, dis: !activeProjectId },
+    { sep: true },
+    ...projects.map((p) => ({ label: p.name, act: () => switchProject(p.id), check: p.id === activeProjectId })),
+    { sep: true },
     ...Object.entries(FILE_VIEWS).map(([k, v]) => ({ label: `New ${v.label}`, act: () => newFile(k) })),
     { sep: true },
     { label: "Close tab", act: () => closeTab(active), dis: !active },
@@ -572,7 +617,9 @@ export default function App() {
             <Icn d={I.burger} size={15} stroke={1.8} />
           </button>
         )}
-        <span style={{ fontFamily: MONO, fontWeight: 500, fontSize: 13, letterSpacing: 0.5, padding: "0 8px" }}>devboard</span>
+        <span style={{ fontFamily: MONO, fontWeight: 500, fontSize: 13, letterSpacing: 0.5, padding: "0 8px" }}>
+          devboard{activeProjectId && <span style={{ color: C.faint, fontWeight: 400 }}> — {projects.find((p) => p.id === activeProjectId)?.name}</span>}
+        </span>
         {Object.entries(menus).map(([name, items]) => (
           <div key={name} style={{ position: "relative" }}>
             <button onClick={() => setMenuOpen((m) => (m === name ? null : name))}
