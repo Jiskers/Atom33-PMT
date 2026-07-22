@@ -124,10 +124,12 @@ The UI is already responsive (drawer nav, touch drag, pinch zoom, bottom tabs) a
 - [x] File management: rename in tree, delete, move between folders, new folder UI
 - [x] Undo/redo (single history stack in App; views already funnel changes through one path)
 
-**Phase 2 — desktop (partially done)**
+**Phase 2 — desktop (complete)**
 - [x] Tauri wrapper: scaffold, `tauri dev`/`tauri build`, signed auto-updater backed by GitHub Releases (checks on launch, File → Check for updates, real version shown in the menu bar)
 - [x] fs storage adapter — real per-file JSON on disk via `@tauri-apps/plugin-fs` under `$APPDATA` (`project.json` manifest + `files/<id>.json`), diffed against an in-memory cache so autosave only writes what changed. Verified round-trip: edited a file directly on disk, relaunched, the edit survived and re-saved correctly instead of reverting to seed data
-- [ ] Native menu bar, window state persistence, file associations
+- [x] Window state persistence — `tauri-plugin-window-state`, remembers position/size/maximized across launches. Verified: moved + resized the window, closed it gracefully, relaunched, geometry matched exactly
+- Dropped: a native OS menu bar. devboard's own in-app menu already works identically across web/desktop/mobile — a second, native one would be redundant (same reasoning VS Code/Figma/Discord use for skipping theirs)
+- Dropped: file associations. There's no user-facing file format to associate — devboard's "files" are internal JSON keyed by id, not documents. What this item was actually reaching for turned out to be multi-project support, done under Phase 4 below
 
 **Phase 3 — mobile (decided, deliberately not started)**
 - Decided: Tauri's own Android/iOS targets instead of a separate Capacitor project — one shell, one update mechanism, for desktop and mobile both.

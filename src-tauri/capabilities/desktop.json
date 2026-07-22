@@ -12,6 +12,7 @@
     "updater:default",
     "process:allow-restart",
     "fs:allow-appdata-write-recursive",
-    "fs:allow-appdata-read-recursive"
+    "fs:allow-appdata-read-recursive",
+    "window-state:default"
   ]
 }
