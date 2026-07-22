@@ -36,12 +36,20 @@ export const evalCell = (cells, key, depth = 0) => {
   }
 };
 
-const COLS = 6, ROWS = 16;
+// Single-letter columns only (A-Z) — the formula engine's cell-ref regex
+// (([A-Z])(\d+)) assumes one letter, and going past Z would mean teaching
+// it AA/AB-style addressing too. 200 rows is already generous for what
+// this is (project planning, not data analysis) and keeps a plain <table>
+// render (no virtualization) comfortably fast.
+const MIN_COLS = 1, MAX_COLS = 26;
+const MIN_ROWS = 1, MAX_ROWS = 200;
 
 function SheetView({ file, onChange, ctx }) {
   const [editing, setEditing] = useState(null);
   const [draft, setDraft] = useState("");
   const cells = file.cells;
+  const cols = file.cols ?? 6;
+  const rows = file.rows ?? 16;
   const colW = ctx.isMobile ? 84 : 108;
 
   const commit = () => {
@@ -54,14 +62,42 @@ function SheetView({ file, onChange, ctx }) {
     setEditing(null);
   };
 
+  const addCol = () => cols < MAX_COLS && onChange({ ...file, cols: cols + 1 });
+  const addRow = () => rows < MAX_ROWS && onChange({ ...file, rows: rows + 1 });
+  const removeCol = () => {
+    if (cols <= MIN_COLS) return;
+    const letter = String.fromCharCode(65 + cols - 1);
+    const hasData = Object.keys(cells).some((k) => k[0] === letter);
+    if (hasData && !window.confirm(`Column ${letter} has data — remove it anyway?`)) return;
+    const next = { ...cells };
+    Object.keys(next).forEach((k) => { if (k[0] === letter) delete next[k]; });
+    onChange({ ...file, cols: cols - 1, cells: next });
+  };
+  const removeRow = () => {
+    if (rows <= MIN_ROWS) return;
+    const hasData = Object.keys(cells).some((k) => k.slice(1) === String(rows));
+    if (hasData && !window.confirm(`Row ${rows} has data — remove it anyway?`)) return;
+    const next = { ...cells };
+    Object.keys(next).forEach((k) => { if (k.slice(1) === String(rows)) delete next[k]; });
+    onChange({ ...file, rows: rows - 1, cells: next });
+  };
+  const sizeBtn = (dis) => ({ background: C.panel2, border: `1px solid ${C.line}`, borderRadius: 6, color: dis ? C.faint : C.text, fontSize: 11.5, padding: "5px 10px", cursor: dis ? "default" : "pointer", fontFamily: MONO, opacity: dis ? 0.5 : 1 });
+
   return (
     <div style={{ padding: ctx.isMobile ? 10 : 18, minHeight: "100%" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+        <button onClick={addCol} disabled={cols >= MAX_COLS} title="Add column" style={sizeBtn(cols >= MAX_COLS)}>+ col</button>
+        <button onClick={removeCol} disabled={cols <= MIN_COLS} title="Remove last column" style={sizeBtn(cols <= MIN_COLS)}>− col</button>
+        <button onClick={addRow} disabled={rows >= MAX_ROWS} title="Add row" style={sizeBtn(rows >= MAX_ROWS)}>+ row</button>
+        <button onClick={removeRow} disabled={rows <= MIN_ROWS} title="Remove last row" style={sizeBtn(rows <= MIN_ROWS)}>− row</button>
+        <span style={{ fontSize: 10.5, color: C.faint, fontFamily: MONO, marginLeft: 4 }}>{String.fromCharCode(65 + cols - 1)}{rows}</span>
+      </div>
       <div style={{ display: "inline-block", border: `1px solid ${C.line}`, borderRadius: 8, overflow: "hidden", background: C.panel }}>
         <table style={{ borderCollapse: "collapse" }}>
           <thead>
             <tr>
               <th style={{ width: 34, background: C.panel2, borderBottom: `1px solid ${C.line}` }} />
-              {Array.from({ length: COLS }, (_, c) => (
+              {Array.from({ length: cols }, (_, c) => (
                 <th key={c} style={{ width: colW, padding: "6px 0", background: C.panel2, borderBottom: `1px solid ${C.line}`, borderLeft: `1px solid ${C.line}`, fontSize: 10.5, fontWeight: 500, color: C.dim, fontFamily: MONO }}>
                   {String.fromCharCode(65 + c)}
                 </th>
@@ -69,10 +105,10 @@ function SheetView({ file, onChange, ctx }) {
             </tr>
           </thead>
           <tbody>
-            {Array.from({ length: ROWS }, (_, r) => (
+            {Array.from({ length: rows }, (_, r) => (
               <tr key={r}>
                 <td style={{ background: C.panel2, borderTop: `1px solid ${C.line}`, textAlign: "center", fontSize: 10, color: C.faint, fontFamily: MONO }}>{r + 1}</td>
-                {Array.from({ length: COLS }, (_, c) => {
+                {Array.from({ length: cols }, (_, c) => {
                   const key = String.fromCharCode(65 + c) + (r + 1);
                   const raw = cells[key] ?? "";
                   const isEd = editing === key;
@@ -115,7 +151,14 @@ registerView("core:sheet", {
   color: "#A8D8B0",
   zoomable: false,
   canvas: false,
-  version: 1,
-  create: () => ({ settings: {}, cells: {} }),
+  version: 2,
+  migrate: (data, fromVersion) => {
+    // v1 sheets had no cols/rows field — they were always the old fixed
+    // 6x16 grid, so preserve that exact size rather than surprise-growing
+    // existing sheets to the new default.
+    if (fromVersion === 1) return { ...data, cols: 6, rows: 16 };
+    return data;
+  },
+  create: () => ({ settings: {}, cells: {}, cols: 10, rows: 30 }),
   Component: SheetView,
 });
