@@ -145,9 +145,9 @@ The UI is already responsive (drawer nav, touch drag, pinch zoom, bottom tabs) a
 
 **Phase 5 — page depth & extensibility**
 - [ ] Modules become per-view instead of board-only: the rail's module palette currently always shows the board module set regardless of which view is open, even though only board can actually place them. Registry + rail should read the *active view's* own module set, so kanban/sheet/draw/code (and the future Home view below) can each bring their own
-- [ ] Sheet: past the fixed 6×16 (A–F, 1–16) grid — bigger and/or resizable
-- [ ] Kanban: custom columns (add/rename/delete/reorder, not just the fixed Backlog/In Progress/Done), plus a Trello-style card detail panel (description, checklist, images) opened from a card
-- [ ] Board + draw: adjustable canvas/workspace size (currently fixed via `CANVAS_W`/`CANVAS_H` in `theme.js`)
+- [x] Sheet: past the fixed 6×16 (A–F, 1–16) grid — resizable up to 26×200, capped at single-letter columns (A-Z) since the formula engine's cell-ref regex assumes one letter
+- [x] Kanban: custom columns (add/rename/delete/reorder) plus a Trello-style card detail panel (description, checklist, image URLs) opened from a card
+- [x] Board + draw: adjustable canvas/workspace size — 4 presets (Compact/Default/Large/Huge) in the View menu, per file. Resizing is non-destructive; content outside the new bounds just loses the toned backdrop, nothing is clipped
 - [ ] New "Home" view: a customizable dashboard/summary page, built on the same per-view-module system above
 - [ ] Game-dev module pack: GDD outline, asset pipeline tracker, bug board, playtest log
 - [ ] php-wasm runtime so Run works for .php

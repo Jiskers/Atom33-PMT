@@ -19,8 +19,18 @@ export const TONES = { slate: "#1D2027", cork: "#372D24", ink: "#14161A" };
 export const STATUS = ["idea", "prototyping", "it's fun", "cut"];
 export const STATUS_COLOR = ["#93C5E8", "#F2D06B", "#A8D8B0", "#EDA6AD"];
 
+// Default workspace size for board/draw — overridable per file via
+// settings.canvasW/canvasH (see CANVAS_SIZES). Resizing is non-destructive:
+// modules/strokes outside the new bounds just render without the toned
+// backdrop behind them, nothing is clipped or lost.
 export const CANVAS_W = 1800;
 export const CANVAS_H = 1300;
+export const CANVAS_SIZES = {
+  Compact: { w: 1200, h: 900 },
+  Default: { w: CANVAS_W, h: CANVAS_H },
+  Large: { w: 2600, h: 1800 },
+  Huge: { w: 4000, h: 2800 },
+};
 
 export const ZMIN = 0.4;
 export const ZMAX = 2.5;

@@ -6,7 +6,7 @@ import { checkForUpdate, installUpdateAndRestart, getAppVersion } from "./core/u
 import { findNode, removeNode, insertNode, moveNode, renameFolder, collectFileIds } from "./core/tree.js";
 import { seedFiles, seedTree, seedTabs, seedExpanded } from "./core/seed.js";
 import { I, Icn } from "./core/icons.jsx";
-import { C, STICKY, TONES, CANVAS_W, CANVAS_H, clampZ, uid, fileExt, KNOWN_EXTS, MONO, SANS, HAND } from "./core/theme.js";
+import { C, STICKY, TONES, CANVAS_W, CANVAS_H, CANVAS_SIZES, clampZ, uid, fileExt, KNOWN_EXTS, MONO, SANS, HAND } from "./core/theme.js";
 import { makeModule } from "./views/board.jsx";
 import { PreviewView, runFile } from "./views/code.jsx";
 
@@ -131,6 +131,8 @@ export default function App() {
   const zoom = zoomable ? file.settings.zoom ?? 1 : 1;
   const pan = zoomable ? file.settings.pan ?? { x: 0, y: 0 } : { x: 0, y: 0 };
   const canvasish = !!view?.canvas;
+  const canvasW = canvasish ? file.settings.canvasW ?? CANVAS_W : CANVAS_W;
+  const canvasH = canvasish ? file.settings.canvasH ?? CANVAS_H : CANVAS_H;
   const ext = file?.view === "core:code" ? fileExt(file.name) : "";
 
   /* ---- apply a loaded project's data into state (boot + project switch) ---- */
@@ -554,6 +556,11 @@ export default function App() {
       label: `Tone: ${k}`, radio: file?.settings?.tone === k,
       act: () => updateFile(active, { settings: { ...file.settings, tone: k } }), dis: !canvasish,
     })),
+    { sep: true },
+    ...Object.entries(CANVAS_SIZES).map(([k, { w, h }]) => ({
+      label: `Canvas: ${k} (${w}×${h})`, radio: canvasW === w && canvasH === h,
+      act: () => updateFile(active, { settings: { ...file.settings, canvasW: w, canvasH: h } }), dis: !canvasish,
+    })),
   ];
   const runItems = [
     { label: "Run file", act: () => runFile(files, active, openFile, say), dis: !file || file.view !== "core:code" },
@@ -722,7 +729,7 @@ export default function App() {
               )}
               {file && canvasish && ViewComponent && (
                 <div data-cam-bg="1"
-                  style={{ position: "absolute", top: 0, left: 0, width: CANVAS_W, height: CANVAS_H, transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: "0 0", cursor: "grab", ...gridBg }}
+                  style={{ position: "absolute", top: 0, left: 0, width: canvasW, height: canvasH, transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: "0 0", cursor: "grab", ...gridBg }}
                   onPointerDown={(e) => { if (e.target === e.currentTarget) { setSelectedMod(null); setSettingsFor(null); } }}>
                   <ViewComponent file={file} ctx={ctx} onChange={(f) => setFiles((fs) => ({ ...fs, [active]: f }))} />
                 </div>

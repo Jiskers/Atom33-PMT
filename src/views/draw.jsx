@@ -64,7 +64,7 @@ function DrawView({ file, onChange, ctx }) {
   const toPts = (s) => s.points.map((p) => p.join(",")).join(" ");
 
   return (
-    <svg width={CANVAS_W} height={CANVAS_H}
+    <svg width={file.settings.canvasW ?? CANVAS_W} height={file.settings.canvasH ?? CANVAS_H}
       style={{ display: "block", touchAction: "none", cursor: "crosshair" }}
       onPointerDown={down} onPointerMove={move} onPointerUp={up}>
       {file.strokes.length === 0 && !current && (
@@ -125,12 +125,14 @@ registerView("core:draw", {
   color: "#EDA6AD",
   zoomable: true,
   canvas: true,
-  version: 2,
+  version: 3,
   migrate: (data, fromVersion) => {
+    // one call per version step (fromVersion -> +1), not cumulative.
     if (fromVersion === 1) return { ...data, settings: { ...data.settings, pan: data.settings.pan ?? { x: 0, y: 0 } } };
+    if (fromVersion === 2) return { ...data, settings: { ...data.settings, canvasW: data.settings.canvasW ?? CANVAS_W, canvasH: data.settings.canvasH ?? CANVAS_H } };
     return data;
   },
-  create: () => ({ settings: { tone: "ink", grid: false, zoom: 1, pan: { x: 0, y: 0 } }, strokes: [] }),
+  create: () => ({ settings: { tone: "ink", grid: false, zoom: 1, pan: { x: 0, y: 0 }, canvasW: CANVAS_W, canvasH: CANVAS_H }, strokes: [] }),
   Component: DrawView,
   Overlay: DrawToolbar,
 });

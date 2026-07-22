@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { registerView, MODULE_TYPES } from "../core/registry.js";
 import { I, Icn } from "../core/icons.jsx";
-import { C, MONO, HAND, uid } from "../core/theme.js";
+import { C, MONO, HAND, uid, CANVAS_W, CANVAS_H } from "../core/theme.js";
 
 /* ---------- one pinned, draggable module instance ---------- */
 function ModuleCard({ m, ctx, ops }) {
@@ -139,11 +139,14 @@ registerView("core:board", {
   color: "#E8C87A",
   zoomable: true,
   canvas: true,
-  version: 2,
+  version: 3,
   migrate: (data, fromVersion) => {
+    // migrations.js calls this once per version step (fromVersion -> +1),
+    // not cumulatively — each branch must return, not fall through.
     if (fromVersion === 1) return { ...data, settings: { ...data.settings, pan: data.settings.pan ?? { x: 0, y: 0 } } };
+    if (fromVersion === 2) return { ...data, settings: { ...data.settings, canvasW: data.settings.canvasW ?? CANVAS_W, canvasH: data.settings.canvasH ?? CANVAS_H } };
     return data;
   },
-  create: () => ({ settings: { grid: true, tone: "slate", zoom: 1, pan: { x: 0, y: 0 } }, modules: [] }),
+  create: () => ({ settings: { grid: true, tone: "slate", zoom: 1, pan: { x: 0, y: 0 }, canvasW: CANVAS_W, canvasH: CANVAS_H }, modules: [] }),
   Component: BoardView,
 });
