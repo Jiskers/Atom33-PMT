@@ -119,6 +119,7 @@ export default function App() {
   const undoT = useRef(null);
   const applyingHistory = useRef(false); // true while undo()/redo() itself is setting files/tree
   const historyApi = useRef({});
+  const menuCloseT = useRef(null);
 
   const isMobile = vw < 760;
   const previewOf = active?.startsWith("pv:") ? active.slice(3) : null;
@@ -421,6 +422,18 @@ export default function App() {
     getAppVersion().then(setAppVersion);
   }, []);
   const toggle = (id) => setExpanded((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+
+  /* ---- menu bar: hover-to-open on desktop, click-to-toggle on mobile
+     (no hover there). A short close delay tolerates the dead zone
+     between the button and its dropdown so crossing it doesn't flicker. */
+  const openMenu = (name) => {
+    clearTimeout(menuCloseT.current);
+    setMenuOpen(name);
+  };
+  const scheduleMenuClose = () => {
+    clearTimeout(menuCloseT.current);
+    menuCloseT.current = setTimeout(() => setMenuOpen(null), 150);
+  };
   const openFile = (id) => {
     setTabs((t) => (t.includes(id) ? t : [...t, id]));
     setActive(id);
@@ -621,9 +634,10 @@ export default function App() {
           devboard{activeProjectId && <span style={{ color: C.faint, fontWeight: 400 }}> — {projects.find((p) => p.id === activeProjectId)?.name}</span>}
         </span>
         {Object.entries(menus).map(([name, items]) => (
-          <div key={name} style={{ position: "relative" }}>
+          <div key={name} style={{ position: "relative" }}
+            onMouseEnter={() => !isMobile && openMenu(name)}
+            onMouseLeave={() => !isMobile && scheduleMenuClose()}>
             <button onClick={() => setMenuOpen((m) => (m === name ? null : name))}
-              onMouseEnter={() => menuOpen && setMenuOpen(name)}
               style={{ background: menuOpen === name ? C.panel2 : "none", border: "none", color: C.text, fontSize: 12.5, padding: "7px 11px", borderRadius: 6, cursor: "pointer", fontFamily: SANS }}>
               {name}
             </button>
