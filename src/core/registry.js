@@ -68,10 +68,30 @@
      say, openFile, selection: { selectedMod, setSelectedMod,
      settingsFor, setSettingsFor }
    }
+
+   ---- registerWidget(id, def) ----
+   Home dashboard widgets — a separate plugin category from board
+   modules. Unlike a module (self-contained data pinned to one file),
+   a widget lives on the project-wide Home dashboard and is free to
+   read the rest of the project through ctx (open files, jump to one).
+   def = {
+     label:    string        palette name
+     desc:     string        palette description
+     w:        number?       grid column span, default 1 (of 4)
+     version:  number?       data schema version, default 1
+     migrate:  (data, fromVersion) => data   same contract as a module
+     create:   () => data    starting data for a new instance
+     Body:     Component     ({ m, onData, ctx }) widget contents —
+                             m is the instance ({ id, type, data }),
+                             same shape as a module's `m`. ctx is the
+                             same object handed to views, so a widget
+                             can list/open project files
+   }
    ============================================================ */
 
 export const MODULE_TYPES = {};
 export const FILE_VIEWS = {};
+export const WIDGET_TYPES = {};
 
 const NAMESPACED_ID = /^[a-z0-9][a-z0-9_-]*:[a-z0-9][a-z0-9_-]*$/i;
 
@@ -91,4 +111,10 @@ export function registerView(id, def) {
   assertNamespaced("view", id);
   if (FILE_VIEWS[id]) console.warn(`view "${id}" re-registered`);
   FILE_VIEWS[id] = def;
+}
+
+export function registerWidget(id, def) {
+  assertNamespaced("widget", id);
+  if (WIDGET_TYPES[id]) console.warn(`widget "${id}" re-registered`);
+  WIDGET_TYPES[id] = def;
 }

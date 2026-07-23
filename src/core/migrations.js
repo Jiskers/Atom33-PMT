@@ -14,12 +14,12 @@
    function chains those steps, so a save from three versions ago
    still loads correctly.
    ============================================================ */
-import { MODULE_TYPES, FILE_VIEWS } from "./registry.js";
+import { MODULE_TYPES, FILE_VIEWS, WIDGET_TYPES } from "./registry.js";
 
-export const PROJECT_SCHEMA_VERSION = 2;
+export const PROJECT_SCHEMA_VERSION = 3;
 
-function migrateModule(m) {
-  const def = MODULE_TYPES[m.type];
+function migrateInstance(types, m) {
+  const def = types[m.type];
   if (!def) return m; // unknown type (plugin removed/renamed) — leave as-is
   const target = def.version ?? 1;
   const { v = 1, data, ...rest } = m;
@@ -31,6 +31,9 @@ function migrateModule(m) {
   }
   return { ...rest, v: target, data: cur };
 }
+
+const migrateModule = (m) => migrateInstance(MODULE_TYPES, m);
+const migrateWidget = (w) => migrateInstance(WIDGET_TYPES, w);
 
 function migrateFile(f) {
   const def = FILE_VIEWS[f.view];
@@ -69,6 +72,10 @@ function migrateProjectShape(project, fromVersion) {
     );
     return { ...project, files };
   }
+  if (fromVersion === 2) {
+    // v2 -> v3: added the Home dashboard (project.home.widgets).
+    return { ...project, home: project.home ?? { widgets: [] } };
+  }
   return project;
 }
 
@@ -82,5 +89,6 @@ export function migrateProject(raw) {
   const files = Object.fromEntries(
     Object.entries(rest.files ?? {}).map(([id, f]) => [id, migrateFile(f)])
   );
-  return { ...rest, files, schemaVersion: PROJECT_SCHEMA_VERSION };
+  const home = rest.home ?? { widgets: [] };
+  return { ...rest, files, home: { ...home, widgets: home.widgets.map(migrateWidget) }, schemaVersion: PROJECT_SCHEMA_VERSION };
 }

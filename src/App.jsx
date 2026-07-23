@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { MODULE_TYPES, FILE_VIEWS } from "./core/registry.js";
+import { MODULE_TYPES, FILE_VIEWS, WIDGET_TYPES } from "./core/registry.js";
 import { storage } from "./core/storage.js";
 import { migrateProject, PROJECT_SCHEMA_VERSION } from "./core/migrations.js";
 import { checkForUpdate, installUpdateAndRestart, getAppVersion } from "./core/updater.js";
@@ -85,6 +85,124 @@ function TreeNode({ node, depth, files, expanded, toggle, openFile, activeId, re
   );
 }
 
+/* ---------- persistent left nav rail: Home / Projects now, the
+   rest are room-to-grow placeholders (group projects, chat, etc). ---- */
+function RailIcon({ icon, label, active, onClick }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <button onClick={onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+      style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, width: "100%", background: "none", border: "none", cursor: "pointer", padding: "8px 0", color: active ? C.gold : hover ? C.text : C.faint }}>
+      <span style={{
+        display: "flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 8,
+        background: active ? "#E8C87A22" : hover ? C.panel2 : "none",
+      }}>
+        <Icn d={icon} size={15} stroke={1.6} />
+      </span>
+      {label && <span style={{ fontSize: 9, fontFamily: SANS, fontWeight: active ? 700 : 500 }}>{label}</span>}
+    </button>
+  );
+}
+function IconRail({ section, setSection, say, onQuickAdd }) {
+  const soon = (label) => say(`${label} isn't built yet`);
+  return (
+    <div style={{ width: 64, flexShrink: 0, background: C.panel, borderRight: `1px solid ${C.line}`, display: "flex", flexDirection: "column", alignItems: "center", padding: "10px 6px" }}>
+      <button onClick={onQuickAdd} title="New board"
+        style={{ width: 32, height: 32, borderRadius: "50%", background: C.gold, color: C.ink, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
+        <Icn d={I.plus} size={14} stroke={2} />
+      </button>
+      <RailIcon icon={I.search} label="" active={false} onClick={() => soon("Search")} />
+      <div style={{ height: 10 }} />
+      <RailIcon icon={I.home} label="Home" active={section === "home"} onClick={() => setSection("home")} />
+      <RailIcon icon={I.folder} label="Projects" active={section === "projects"} onClick={() => setSection("projects")} />
+      <RailIcon icon={I.board} label="Everything" active={false} onClick={() => soon("Everything")} />
+      <RailIcon icon={I.reports} label="Reports" active={false} onClick={() => soon("Reports")} />
+      <RailIcon icon={I.people} label="People" active={false} onClick={() => soon("People")} />
+      <RailIcon icon={I.chat} label="Chat" active={false} onClick={() => soon("Chat")} />
+      <div style={{ flex: 1 }} />
+      <RailIcon icon={I.help} label="" active={false} onClick={() => soon("Help")} />
+      <RailIcon icon={I.gear} label="" active={false} onClick={() => soon("Settings")} />
+      <button onClick={() => soon("Profile")} title="Me"
+        style={{ width: 28, height: 28, borderRadius: "50%", background: C.gold, color: C.ink, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, fontFamily: SANS, marginTop: 8 }}>
+        me
+      </button>
+    </div>
+  );
+}
+
+/* ---------- Home dashboard: a grid of widgets, not free-pinned —
+   "position" is just order, so the grid packs snug instead of
+   leaving gaps like board's absolute x/y canvas would. ---- */
+function WidgetCard({ w, index, count, ctx, ops }) {
+  const [hover, setHover] = useState(false);
+  const def = WIDGET_TYPES[w.type];
+  if (!def) return null;
+  const { Body } = def;
+  return (
+    <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+      style={{ gridColumn: `span ${Math.min(def.w ?? 1, 4)}`, background: C.panel, border: `1px solid ${C.line}`, borderRadius: 10, padding: 12, position: "relative", minWidth: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+        <span style={{ fontSize: 9.5, letterSpacing: 1.2, textTransform: "uppercase", color: C.faint, fontFamily: MONO }}>{def.label}</span>
+        {hover && (
+          <div style={{ display: "flex", gap: 2 }}>
+            <button onClick={() => ops.move(-1)} disabled={index === 0} title="Move left"
+              style={{ background: "none", border: "none", color: index === 0 ? C.line : C.faint, cursor: index === 0 ? "default" : "pointer", display: "flex", padding: 4 }}>
+              <Icn d={I.left} size={10} stroke={2} />
+            </button>
+            <button onClick={() => ops.move(1)} disabled={index === count - 1} title="Move right"
+              style={{ background: "none", border: "none", color: index === count - 1 ? C.line : C.faint, cursor: index === count - 1 ? "default" : "pointer", display: "flex", padding: 4 }}>
+              <Icn d={I.right} size={10} stroke={2} />
+            </button>
+            <button onClick={ops.remove} title="Remove widget"
+              style={{ background: "none", border: "none", color: C.faint, cursor: "pointer", display: "flex", padding: 4 }}>
+              <Icn d={I.x} size={10} stroke={2} />
+            </button>
+          </div>
+        )}
+      </div>
+      <Body m={w} onData={ops.data} ctx={ctx} />
+    </div>
+  );
+}
+function HomeSection({ home, api, ctx, isMobile }) {
+  return (
+    <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
+      {!isMobile && (
+        <div style={{ width: 248, borderRight: `1px solid ${C.line}`, overflowY: "auto", padding: "12px 10px", flexShrink: 0, background: C.panel }}>
+          <div style={{ fontSize: 9.5, letterSpacing: 1.6, textTransform: "uppercase", color: C.faint, fontFamily: MONO, padding: "0 4px 8px" }}>
+            widgets — click to add
+          </div>
+          {Object.entries(WIDGET_TYPES).map(([type, t]) => (
+            <div key={type} onClick={() => api.add(type)}
+              style={{ padding: "11px 10px", marginBottom: 6, background: C.panel2, border: `1px solid ${C.line}`, borderRadius: 7, cursor: "pointer" }}>
+              <div style={{ fontSize: 12.5, fontWeight: 600 }}>{t.label}</div>
+              <div style={{ fontSize: 10.5, color: C.faint }}>{t.desc}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{ flex: 1, overflowY: "auto", padding: 18 }}>
+        <div style={{ fontSize: 18, fontWeight: 700, fontFamily: SANS, marginBottom: 14 }}>Home</div>
+        {home.widgets.length === 0 ? (
+          <div style={{ fontFamily: HAND, fontSize: 24, color: C.faint, transform: "rotate(-1deg)" }}>
+            {isMobile ? "no widgets yet" : "add a widget from the left to build your dashboard →"}
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, alignItems: "start" }}>
+            {home.widgets.map((w, i) => (
+              <WidgetCard key={w.id} w={w} index={i} count={home.widgets.length} ctx={ctx}
+                ops={{
+                  move: (dir) => api.move(w.id, dir),
+                  remove: () => api.remove(w.id),
+                  data: (patch) => api.patch(w.id, patch),
+                }} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ============================================================ */
 export default function App() {
   const [loaded, setLoaded] = useState(false);
@@ -93,6 +211,8 @@ export default function App() {
   const [tabs, setTabs] = useState(seedTabs);
   const [active, setActive] = useState(seedTabs[0]);
   const [expanded, setExpanded] = useState(new Set(seedExpanded));
+  const [home, setHome] = useState({ widgets: [] });
+  const [section, setSection] = useState("projects");
   const [toast, setToast] = useState(null);
   const [menuOpen, setMenuOpen] = useState(null);
   const [selectedMod, setSelectedMod] = useState(null);
@@ -143,6 +263,7 @@ export default function App() {
       setTabs(saved.tabs ?? []);
       setActive(saved.active ?? saved.tabs?.[0] ?? null);
       setExpanded(new Set(saved.expanded ?? []));
+      setHome(saved.home ?? { widgets: [] });
     }
   };
 
@@ -201,11 +322,11 @@ export default function App() {
     setSaveState({ status: "saving" });
     clearTimeout(saveT.current);
     saveT.current = setTimeout(async () => {
-      await storage.save({ schemaVersion: PROJECT_SCHEMA_VERSION, files, tree, tabs, active, expanded: [...expanded] });
+      await storage.save({ schemaVersion: PROJECT_SCHEMA_VERSION, files, tree, tabs, active, expanded: [...expanded], home });
       setSaveState({ status: "saved", at: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) });
     }, 650);
     return () => clearTimeout(saveT.current);
-  }, [files, tree, tabs, active, expanded, loaded]);
+  }, [files, tree, tabs, active, expanded, home, loaded]);
 
   /* ---- undo/redo: a single history stack over { files, tree } — every
      view already funnels edits through onChange/updateFile into those two,
@@ -440,6 +561,7 @@ export default function App() {
     setTabs((t) => (t.includes(id) ? t : [...t, id]));
     setActive(id);
     setSettingsFor(null); setSelectedMod(null); setDrawer(null);
+    setSection("projects");
   };
   const closeTab = (id) => setTabs((t) => {
     const n = t.filter((x) => x !== id);
@@ -448,11 +570,29 @@ export default function App() {
   });
 
   const addModule = (type, x = 100, y = 100) => {
-    if (!file) return say("Open a board or home file first");
+    if (!file) return say("Open a board file first");
     if (!supportsModules) return say(`Modules don't pin to ${view.label} tabs`);
     updateFile(active, { modules: [...file.modules, makeModule(type, x, y)] });
     setDrawer(null);
   };
+
+  /* ---- Home dashboard widgets: an ordered list, not free-pinned like
+     board modules — the grid packs them, so "position" is just index. ---- */
+  const addWidget = (type) => {
+    const def = WIDGET_TYPES[type];
+    if (!def) return;
+    setHome((h) => ({ ...h, widgets: [...h.widgets, { id: uid("w"), type, data: def.create() }] }));
+  };
+  const removeWidget = (id) => setHome((h) => ({ ...h, widgets: h.widgets.filter((w) => w.id !== id) }));
+  const moveWidget = (id, dir) => setHome((h) => {
+    const i = h.widgets.findIndex((w) => w.id === id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= h.widgets.length) return h;
+    const arr = [...h.widgets];
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+    return { ...h, widgets: arr };
+  });
+  const patchWidgetData = (id, patch) => setHome((h) => ({ ...h, widgets: h.widgets.map((w) => (w.id === id ? { ...w, data: { ...w.data, ...patch } } : w)) }));
 
   const newFile = (viewId) => {
     const def = FILE_VIEWS[viewId];
@@ -603,7 +743,7 @@ export default function App() {
           </>
         ) : (
           <div style={{ fontSize: 11.5, color: C.faint, padding: "8px 4px 0", lineHeight: 1.5 }}>
-            {file ? `${view.label} tabs don't use pinned modules.` : "Open a board or home file to pin modules."}
+            {file ? `${view.label} tabs don't use pinned modules.` : "Open a board file to pin modules."}
           </div>
         )}
       </div>
@@ -635,8 +775,12 @@ export default function App() {
 
   if (!loaded) return <div style={{ height: "100vh", background: C.bg }} />;
 
+  const homeApi = { add: addWidget, remove: removeWidget, move: moveWidget, patch: patchWidgetData };
+
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: C.bg, color: C.text, fontFamily: SANS, overflow: "hidden" }}>
+    <div style={{ height: "100%", display: "flex", background: C.bg, color: C.text, fontFamily: SANS, overflow: "hidden" }}>
+      {!isMobile && <IconRail section={section} setSection={setSection} say={say} onQuickAdd={() => newFile("core:board")} />}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
       {/* ===== menu bar ===== */}
       <div style={{ height: 42, display: "flex", alignItems: "center", padding: "0 8px", borderBottom: `1px solid ${C.line}`, flexShrink: 0, position: "relative", zIndex: 60 }}>
         {isMobile && (
@@ -682,6 +826,8 @@ export default function App() {
       </div>
       {menuOpen && <div onClick={() => setMenuOpen(null)} style={{ position: "fixed", inset: 0, zIndex: 55 }} />}
 
+      {section === "home" && <HomeSection home={home} api={homeApi} ctx={ctx} isMobile={isMobile} />}
+      {section === "projects" && (
       <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
         {!isMobile && (
           <div style={{ width: 248, borderRight: `1px solid ${C.line}`, display: "flex", flexDirection: "column", background: C.panel, flexShrink: 0 }}>
@@ -698,7 +844,7 @@ export default function App() {
                 <span style={{ fontSize: 13, fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{previewFile.name}</span>
                 <span style={{ fontSize: 10, fontFamily: MONO, color: C.faint, border: `1px solid ${C.line}`, padding: "1px 8px", borderRadius: 10, flexShrink: 0 }}>preview</span>
               </>
-            ) : file ? (
+            ) : file && view ? (
               <>
                 <span style={{ color: file.view === "core:code" ? KNOWN_EXTS[ext] ?? view.color : view.color, display: "flex", flexShrink: 0 }}>
                   <Icn d={view.icon} size={13} />
@@ -708,6 +854,8 @@ export default function App() {
                 {HeaderAction && <HeaderAction file={file} ctx={ctx} />}
                 <span style={{ fontSize: 10, fontFamily: MONO, color: C.faint, border: `1px solid ${C.line}`, padding: "1px 8px", borderRadius: 10, flexShrink: 0 }}>{view.label}</span>
               </>
+            ) : file ? (
+              <span style={{ fontSize: 12, color: C.faint }}>"{file.name}" uses a view that isn't installed</span>
             ) : (
               <span style={{ fontSize: 12, color: C.faint }}>no file open</span>
             )}
@@ -773,6 +921,7 @@ export default function App() {
               const f = files[isPv ? id.slice(3) : id];
               if (!f) return null;
               const v = FILE_VIEWS[f.view];
+              if (!v && !isPv) return null;
               const on = id === active;
               return (
                 <div key={id} onClick={() => { setActive(id); setSettingsFor(null); setSelectedMod(null); }}
@@ -795,6 +944,7 @@ export default function App() {
           </div>
         </div>
       </div>
+      )}
 
       {/* mobile drawer */}
       {isMobile && drawer && (
@@ -814,6 +964,7 @@ export default function App() {
           </div>
         </>
       )}
+      </div>
 
       {ctxMenu && (
         <>

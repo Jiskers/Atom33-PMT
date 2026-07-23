@@ -1,0 +1,52 @@
+/* ============================================================
+   BUILT-IN HOME DASHBOARD WIDGETS
+   Same idea as modules.jsx, but for the Home section's grid —
+   see registerWidget's contract in core/registry.js. Widgets get
+   ctx (same shape handed to views), so they can read/open project
+   files instead of only holding their own self-contained data.
+   ============================================================ */
+import { registerWidget, FILE_VIEWS } from "./core/registry.js";
+import { Icn } from "./core/icons.jsx";
+import { C, SANS } from "./core/theme.js";
+
+/* ---------- quick jump: list of project files, click to open ---------- */
+registerWidget("core:jump", {
+  label: "Quick jump",
+  desc: "List of project files — click to open one",
+  w: 2,
+  create: () => ({}),
+  Body: ({ ctx }) => {
+    const entries = Object.entries(ctx.files);
+    return (
+      <div style={{ padding: 4 }}>
+        {entries.length === 0 && <div style={{ fontSize: 12, color: C.faint }}>No files in this project yet.</div>}
+        {entries.map(([id, f]) => {
+          const v = FILE_VIEWS[f.view];
+          if (!v) return null;
+          return (
+            <button key={id} onClick={() => ctx.openFile(id)}
+              style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", background: "none", border: "none", color: C.text, fontSize: 12.5, padding: "7px 6px", borderRadius: 6, cursor: "pointer", fontFamily: SANS }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = C.panel2)}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "none")}>
+              <span style={{ color: v.color, display: "flex", flexShrink: 0 }}><Icn d={v.icon} size={12} /></span>
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  },
+});
+
+/* ---------- dash note: a freeform sticky note, sized for the grid ---------- */
+registerWidget("core:note", {
+  label: "Note",
+  desc: "Freeform sticky note for the dashboard",
+  w: 1,
+  create: () => ({ text: "" }),
+  Body: ({ m, onData }) => (
+    <textarea value={m.data.text} onChange={(e) => onData({ text: e.target.value })}
+      placeholder="Jot something down…"
+      style={{ width: "100%", height: 96, background: "transparent", border: "none", outline: "none", resize: "none", color: C.text, fontSize: 12.5, fontFamily: SANS, lineHeight: 1.5 }} />
+  ),
+});

@@ -144,19 +144,23 @@ The UI is already responsive (drawer nav, touch drag, pinch zoom, bottom tabs) a
 - [ ] Conflict copy on clash (rename, never overwrite silently)
 
 **Phase 5 — page depth & extensibility**
-- [x] Modules become per-view instead of board-only: `registerView` takes a `modules: bool` flag — the rail's palette and drag/drop now only show for views that opt in (board, home), instead of always showing the board set on every tab
+- [x] Modules become per-view instead of board-only: `registerView` takes a `modules: bool` flag — the rail's palette and drag/drop now only show for views that opt in (board), instead of always showing the board set on every tab
 - [x] Sheet: past the fixed 6×16 (A–F, 1–16) grid — resizable up to 26×200, capped at single-letter columns (A-Z) since the formula engine's cell-ref regex assumes one letter
 - [x] Kanban: custom columns (add/rename/delete/reorder) plus a Trello-style card detail panel (description, checklist, image URLs) opened from a card
 - [x] Board + draw: adjustable canvas/workspace size — 4 presets (Compact/Default/Large/Huge) in the View menu, per file. Resizing is non-destructive; content outside the new bounds just loses the toned backdrop, nothing is clipped
-- [x] New "Home" view: a customizable dashboard/summary page — same free-pin canvas mechanic as board, its own identity (icon, cork tone), built on the per-view-module system above
 - [x] Game-dev module pack: GDD outline, asset pipeline tracker, bug report, playtest log
+- [x] Persistent left nav rail (Home / Projects now; Everything, Reports, People, Chat, search, settings, and profile are placeholder chips for later — group projects, chat, subscriptions) — Projects is exactly the pre-rail app; today's file tree + module palette live under it
+- [x] New "Home" section: a real dashboard, not a file — a `registerWidget`/`WIDGET_TYPES` plugin category (parallel to modules, own contract in `core/registry.js`) rendered on a snug 4-column grid instead of board's free-pin canvas. Widgets get the same `ctx` a view gets, so they can read/open project files instead of only holding their own data. Ships with two: Quick jump (file list, click to open) and Note (freeform text)
 - [ ] php-wasm runtime so Run works for .php
 - [ ] Stable plugin API + docs → community modules/views
 - [ ] Board links (pin a file onto a board), search across project
 
 ## Known gaps (honest list)
 
-- Undo/redo only covers file/tree content — not tabs, active file, expanded folders, or camera pan/zoom
+- Undo/redo only covers file/tree content — not tabs, active file, expanded folders, camera pan/zoom, or the Home dashboard's widgets
 - Tree drag-to-move only works with a mouse — no touch fallback yet (mirrors the same desktop-only limitation modules have when dragging onto a board)
 - Sheet formulas: only `+ - * / ( )`, refs, and `SUM(range)` — grid size is tracked in Phase 5, formula depth isn't yet
 - Preview resolves linked files by filename, not full relative paths
+- Home is scoped to the active project, not global across projects yet — an "all projects" widget needs a real cross-project store, not just a widget
+- The left rail's Everything/Reports/People/Chat/search/settings/profile are inert placeholders (toast "isn't built yet") — reserved space for later, not implemented
+- Nothing surfaces on Home automatically yet — no way to flag a sticky note or kanban card with a due date so it shows up there; Home only has manually-added widgets so far

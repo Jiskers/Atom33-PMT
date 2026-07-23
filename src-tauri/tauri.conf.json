@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "devboard",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "identifier": "com.devboard.app",
   "build": {
     "frontendDist": "../dist",
