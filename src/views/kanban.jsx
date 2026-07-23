@@ -36,6 +36,18 @@ function CardDetail({ file, onChange, colIdx, cardId, onClose }) {
         </div>
         <div style={{ fontSize: 10.5, color: C.faint, fontFamily: MONO, marginTop: 2 }}>in {col.name}</div>
 
+        <div style={labelStyle}>Reminder</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, cursor: "pointer", color: C.text }}>
+            <input type="checkbox" checked={!!card.flag} onChange={() => patch({ flag: !card.flag })} style={{ accentColor: "#E8564A" }} />
+            Remind me on Home
+          </label>
+          {card.flag && (
+            <input type="date" value={card.due ?? ""} onChange={(e) => patch({ due: e.target.value })}
+              style={{ background: C.panel2, border: `1px solid ${C.line}`, color: C.text, fontSize: 12, padding: "5px 8px", borderRadius: 6, fontFamily: SANS, colorScheme: "dark" }} />
+          )}
+        </div>
+
         <div style={labelStyle}>Description</div>
         <textarea value={card.desc ?? ""} onChange={(e) => patch({ desc: e.target.value })}
           placeholder="Add a description…"
@@ -98,7 +110,7 @@ function KanbanView({ file, onChange, ctx }) {
   const addCard = (ci) => {
     const t = (drafts[ci] ?? "").trim();
     if (!t) return;
-    const n = cols.map((c, i) => (i === ci ? { ...c, cards: [...c.cards, { id: uid("k"), t, tag: "design", desc: "", checklist: [], images: [] }] } : c));
+    const n = cols.map((c, i) => (i === ci ? { ...c, cards: [...c.cards, { id: uid("k"), t, tag: "design", desc: "", checklist: [], images: [], flag: false, due: "" }] } : c));
     onChange({ ...file, columns: n });
     setDrafts((d) => ({ ...d, [ci]: "" }));
   };
@@ -192,6 +204,13 @@ function KanbanView({ file, onChange, ctx }) {
                     style={{ fontSize: 9.5, fontFamily: MONO, color: C.ink, background: tagColor(k.tag), padding: "1px 7px", borderRadius: 10, border: "none", cursor: "pointer" }}>
                     {k.tag}
                   </button>
+                  {k.flag && (
+                    <span title={k.due ? `Reminder: ${k.due}` : "Flagged for Home"}
+                      style={{ display: "flex", alignItems: "center", gap: 3, marginLeft: 7, color: "#E8564A", fontSize: 9.5, fontFamily: MONO }}>
+                      <Icn d={I.flag} size={9} stroke={2.2} />
+                      {k.due}
+                    </span>
+                  )}
                   <div style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
                     <button onClick={(e) => { e.stopPropagation(); moveTo(k, ci - 1); }} disabled={ci === 0} title="Move left"
                       style={{ background: "none", border: `1px solid ${C.line}`, borderRadius: 5, color: ci === 0 ? C.line : C.dim, cursor: ci === 0 ? "default" : "pointer", display: "flex", padding: "3px 6px" }}>

@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { registerView, MODULE_TYPES } from "../core/registry.js";
 import { I, Icn } from "../core/icons.jsx";
-import { C, MONO, HAND, uid, CANVAS_W, CANVAS_H } from "../core/theme.js";
+import { C, MONO, SANS, HAND, uid, CANVAS_W, CANVAS_H } from "../core/theme.js";
 
 /* ---------- one pinned, draggable module instance ---------- */
 function ModuleCard({ m, ctx, ops }) {
@@ -57,6 +57,12 @@ function ModuleCard({ m, ctx, ops }) {
             ? "radial-gradient(circle at 35% 30%, #B8BDC7, #6B7280 65%)"
             : "radial-gradient(circle at 35% 30%, #F08A80, #C0392B 65%)",
         }} />
+      {m.flag && (
+        <div title={m.due ? `Reminder: ${m.due}` : "Flagged for Home"}
+          style={{ position: "absolute", top: -8, left: "calc(50% + 9px)", width: 15, height: 15, borderRadius: "50%", background: "#E8564A", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2, boxShadow: "0 3px 4px rgba(0,0,0,.5)" }}>
+          <Icn d={I.flag} size={8} stroke={2.4} />
+        </div>
+      )}
       {showTools && (
         <div style={{ position: "absolute", top: -11, right: -11, display: "flex", gap: 5, zIndex: 3 }} data-nodrag>
           <button onClick={() => selection.setSettingsFor(settingsOpen ? null : m.id)} title="Module settings"
@@ -90,6 +96,14 @@ function ModuleCard({ m, ctx, ops }) {
               style={{ background: C.panel2, border: `1px solid ${C.line}`, color: C.text, fontSize: 11.5, padding: "6px 11px", borderRadius: 6, cursor: "pointer", alignSelf: "flex-start" }}>
               Straighten
             </button>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, cursor: "pointer", color: C.text }}>
+              <input type="checkbox" checked={!!m.flag} onChange={() => ops.patch({ flag: !m.flag })} style={{ accentColor: "#E8564A" }} />
+              Remind me on Home
+            </label>
+            {m.flag && (
+              <input type="date" data-nodrag value={m.due ?? ""} onChange={(e) => ops.patch({ due: e.target.value })}
+                style={{ background: C.panel2, border: `1px solid ${C.line}`, color: C.text, fontSize: 12, padding: "6px 8px", borderRadius: 6, fontFamily: SANS, colorScheme: "dark" }} />
+            )}
           </div>
         </div>
       )}
@@ -103,6 +117,8 @@ export const makeModule = (type, x, y) => ({
   rot: Math.random() * 4 - 2,
   tint: Math.floor(Math.random() * 4),
   locked: false,
+  flag: false, // "remind me" — surfaced by the Home dashboard's Reminders widget
+  due: "",
   data: MODULE_TYPES[type].create(),
 });
 

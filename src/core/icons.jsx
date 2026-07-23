@@ -35,4 +35,5 @@ export const I = {
   reports: "M2 13.5h12M4 13.5V9M7.5 13.5V4M11 13.5V7",
   chat: "M2 3h12v7.5H6.5L3.5 13v-2.5H2z",
   help: "M6 6.2a2 2 0 113 1.7c-.6.4-1 .8-1 1.6v.3M8 11.5v.01",
+  flag: "M4 2v12M4 3h7l-2 2.5L11 8H4",
 };
