@@ -149,7 +149,7 @@ The UI is already responsive (drawer nav, touch drag, pinch zoom, bottom tabs) a
 - [x] Kanban: custom columns (add/rename/delete/reorder) plus a Trello-style card detail panel (description, checklist, image URLs) opened from a card
 - [x] Board + draw: adjustable canvas/workspace size — 4 presets (Compact/Default/Large/Huge) in the View menu, per file. Resizing is non-destructive; content outside the new bounds just loses the toned backdrop, nothing is clipped
 - [ ] New "Home" view: a customizable dashboard/summary page, built on the same per-view-module system above
-- [ ] Game-dev module pack: GDD outline, asset pipeline tracker, bug board, playtest log
+- [x] Game-dev module pack: GDD outline, asset pipeline tracker, bug report, playtest log
 - [ ] php-wasm runtime so Run works for .php
 - [ ] Stable plugin API + docs → community modules/views
 - [ ] Board links (pin a file onto a board), search across project
