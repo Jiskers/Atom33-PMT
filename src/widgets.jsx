@@ -5,9 +5,10 @@
    ctx (same shape handed to views), so they can read/open project
    files instead of only holding their own self-contained data.
    ============================================================ */
-import { registerWidget, FILE_VIEWS, MODULE_TYPES } from "./core/registry.js";
+import { registerWidget, FILE_VIEWS } from "./core/registry.js";
 import { Icn, I } from "./core/icons.jsx";
 import { C, MONO, SANS } from "./core/theme.js";
+import { collectFlaggedItems, localDateStr } from "./core/reminders.js";
 
 /* ---------- quick jump: list of project files, click to open ---------- */
 registerWidget("core:jump", {
@@ -40,34 +41,20 @@ registerWidget("core:jump", {
 
 /* ---------- reminders: flagged board modules + kanban cards, across
    every file in the project, soonest due date first ---------- */
-function moduleLabel(m) {
-  const d = m.data || {};
-  return d.title || d.name || d.caption || (d.text && d.text.slice(0, 40)) || MODULE_TYPES[m.type]?.label || "Untitled";
-}
 registerWidget("core:reminders", {
   label: "Reminders",
   desc: "Flagged modules + kanban cards, by due date",
   w: 2,
   create: () => ({}),
   Body: ({ ctx }) => {
-    const items = [];
-    for (const [fid, f] of Object.entries(ctx.files)) {
-      for (const m of f.modules ?? []) {
-        if (m.flag) items.push({ id: m.id, fileId: fid, fileName: f.name, label: moduleLabel(m), due: m.due || "" });
-      }
-      for (const col of f.columns ?? []) {
-        for (const card of col.cards ?? []) {
-          if (card.flag) items.push({ id: card.id, fileId: fid, fileName: f.name, label: card.t, due: card.due || "" });
-        }
-      }
-    }
+    const items = collectFlaggedItems(ctx.files);
     items.sort((a, b) => {
       if (!a.due && !b.due) return 0;
       if (!a.due) return 1;
       if (!b.due) return -1;
       return a.due < b.due ? -1 : 1;
     });
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDateStr();
     return (
       <div style={{ padding: 4 }}>
         {items.length === 0 && (

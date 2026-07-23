@@ -149,9 +149,10 @@ The UI is already responsive (drawer nav, touch drag, pinch zoom, bottom tabs) a
 - [x] Kanban: custom columns (add/rename/delete/reorder) plus a Trello-style card detail panel (description, checklist, image URLs) opened from a card
 - [x] Board + draw: adjustable canvas/workspace size — 4 presets (Compact/Default/Large/Huge) in the View menu, per file. Resizing is non-destructive; content outside the new bounds just loses the toned backdrop, nothing is clipped
 - [x] Game-dev module pack: GDD outline, asset pipeline tracker, bug report, playtest log
-- [x] Persistent left nav rail (Home / Projects now; Everything, Reports, People, Chat, search, settings, and profile are placeholder chips for later — group projects, chat, subscriptions) — Projects is exactly the pre-rail app; today's file tree + module palette live under it
+- [x] Persistent left nav rail (Home / Projects / Calendar now; Reports, People, Chat, search, settings, and profile are placeholder chips for later — group projects, chat, subscriptions) — Projects is exactly the pre-rail app; today's file tree + module palette live under it
 - [x] New "Home" section: a real dashboard, not a file — a `registerWidget`/`WIDGET_TYPES` plugin category (parallel to modules, own contract in `core/registry.js`) rendered on a snug 4-column grid instead of board's free-pin canvas. Widgets get the same `ctx` a view gets, so they can read/open project files instead of only holding their own data. Ships with three: Quick jump (file list, click to open), Reminders (below), and Note (freeform text)
 - [x] Flagging mechanic: any board module and any kanban card can be marked "Remind me on Home" (with an optional due date) from its settings/detail panel — flagged items get a small flag badge where they live, and the Reminders widget lists every flagged item across the project, soonest due date first, overdue ones in red, click to jump to the file
+- [x] Calendar section (replaces the placeholder "Everything" rail slot): a local month-view grid plotting every flagged module/card by due date, same underlying data as the Reminders widget via a shared `core/reminders.js` helper — prev/next month, jump to today, click an item to open its file. Google Calendar sync is intentionally not this — it's a Phase 4 idea that needs real sign-in first
 - [ ] php-wasm runtime so Run works for .php
 - [ ] Stable plugin API + docs → community modules/views
 - [ ] Board links (pin a file onto a board), search across project
@@ -163,6 +164,7 @@ The UI is already responsive (drawer nav, touch drag, pinch zoom, bottom tabs) a
 - Sheet formulas: only `+ - * / ( )`, refs, and `SUM(range)` — grid size is tracked in Phase 5, formula depth isn't yet
 - Preview resolves linked files by filename, not full relative paths
 - Home is scoped to the active project, not global across projects yet — an "all projects" widget needs a real cross-project store, not just a widget
-- The left rail's Everything/Reports/People/Chat/search/settings/profile are inert placeholders (toast "isn't built yet") — reserved space for later, not implemented
+- The left rail's Reports/People/Chat/search/settings/profile are inert placeholders (toast "isn't built yet") — reserved space for later, not implemented
 - The Reminders widget guesses a flagged module's display label from common data field names (`title`/`name`/`caption`/`text`), falling back to the module's own label — a module with none of those fields shows its type name, not its actual content
+- Calendar is read-only (jump to a file, can't create/edit a reminder from the grid directly) and shows only single-day due dates — no ranges, no recurring reminders
 - Flag/due are plain fields on the module or card instance, not versioned/migrated data — safe today since they're optional and additive, but a future breaking change to that shape would need real migration, unlike module `data`

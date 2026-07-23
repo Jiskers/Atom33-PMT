@@ -9,6 +9,7 @@ import { I, Icn } from "./core/icons.jsx";
 import { C, STICKY, TONES, CANVAS_W, CANVAS_H, CANVAS_SIZES, clampZ, uid, fileExt, KNOWN_EXTS, MONO, SANS, HAND } from "./core/theme.js";
 import { makeModule } from "./views/board.jsx";
 import { PreviewView, runFile } from "./views/code.jsx";
+import { collectFlaggedItems, localDateStr } from "./core/reminders.js";
 
 /* ---------- inline rename box, shared by folder + file rows ---------- */
 function RenameInput({ initial, onCommit, onCancel }) {
@@ -114,7 +115,7 @@ function IconRail({ section, setSection, say, onQuickAdd }) {
       <div style={{ height: 10 }} />
       <RailIcon icon={I.home} label="Home" active={section === "home"} onClick={() => setSection("home")} />
       <RailIcon icon={I.folder} label="Projects" active={section === "projects"} onClick={() => setSection("projects")} />
-      <RailIcon icon={I.board} label="Everything" active={false} onClick={() => soon("Everything")} />
+      <RailIcon icon={I.calendar} label="Calendar" active={section === "calendar"} onClick={() => setSection("calendar")} />
       <RailIcon icon={I.reports} label="Reports" active={false} onClick={() => soon("Reports")} />
       <RailIcon icon={I.people} label="People" active={false} onClick={() => soon("People")} />
       <RailIcon icon={I.chat} label="Chat" active={false} onClick={() => soon("Chat")} />
@@ -198,6 +199,80 @@ function HomeSection({ home, api, ctx, isMobile }) {
             ))}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Calendar: flagged modules/kanban cards plotted on a
+   month grid by due date — same data as the Reminders widget, just
+   a different shape. Local only for now; Google Calendar sync is a
+   Phase 4 idea that rides along with real sign-in, not this. ---- */
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const pad2 = (n) => String(n).padStart(2, "0");
+
+function CalendarSection({ ctx }) {
+  const now = new Date();
+  const [ym, setYm] = useState({ y: now.getFullYear(), m: now.getMonth() });
+  const byDate = {};
+  for (const it of collectFlaggedItems(ctx.files)) {
+    if (!it.due) continue;
+    (byDate[it.due] ??= []).push(it);
+  }
+
+  const first = new Date(ym.y, ym.m, 1);
+  const daysInMonth = new Date(ym.y, ym.m + 1, 0).getDate();
+  const cells = [];
+  for (let i = 0; i < first.getDay(); i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const todayStr = localDateStr(now);
+  const shiftMonth = (delta) => setYm((s) => {
+    let m = s.m + delta, y = s.y;
+    if (m < 0) { m = 11; y--; }
+    if (m > 11) { m = 0; y++; }
+    return { y, m };
+  });
+  const navBtn = { width: 26, height: 26, borderRadius: 6, background: C.panel2, border: `1px solid ${C.line}`, color: C.text, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" };
+
+  return (
+    <div style={{ flex: 1, overflowY: "auto", padding: 18 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+        <div style={{ fontSize: 18, fontWeight: 700, fontFamily: SANS }}>{MONTH_NAMES[ym.m]} {ym.y}</div>
+        <div style={{ display: "flex", gap: 5, marginLeft: "auto" }}>
+          <button onClick={() => shiftMonth(-1)} title="Previous month" style={navBtn}><Icn d={I.left} size={11} stroke={2} /></button>
+          <button onClick={() => setYm({ y: now.getFullYear(), m: now.getMonth() })}
+            style={{ ...navBtn, width: "auto", padding: "0 12px", fontSize: 11.5, fontFamily: SANS }}>
+            Today
+          </button>
+          <button onClick={() => shiftMonth(1)} title="Next month" style={navBtn}><Icn d={I.right} size={11} stroke={2} /></button>
+        </div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6 }}>
+        {WEEKDAYS.map((w) => (
+          <div key={w} style={{ fontSize: 10, fontFamily: MONO, color: C.faint, textAlign: "center", padding: "0 0 4px" }}>{w}</div>
+        ))}
+        {cells.map((d, i) => {
+          if (d === null) return <div key={i} />;
+          const dateStr = `${ym.y}-${pad2(ym.m + 1)}-${pad2(d)}`;
+          const dayItems = byDate[dateStr] ?? [];
+          const isToday = dateStr === todayStr;
+          return (
+            <div key={i} style={{ minHeight: 76, border: `1px solid ${isToday ? C.gold : C.line}`, borderRadius: 6, padding: 6, background: isToday ? "#E8C87A14" : C.panel, display: "flex", flexDirection: "column", gap: 3, overflow: "hidden" }}>
+              <div style={{ fontSize: 10.5, fontFamily: MONO, color: isToday ? C.gold : C.faint }}>{d}</div>
+              {dayItems.slice(0, 3).map((it) => (
+                <button key={it.id} onClick={() => ctx.openFile(it.fileId)} title={it.label}
+                  style={{ display: "flex", alignItems: "center", gap: 3, background: "none", border: "none", color: "#E8564A", fontSize: 9.5, fontFamily: SANS, padding: 0, cursor: "pointer", textAlign: "left", minWidth: 0 }}>
+                  <Icn d={I.flag} size={7} stroke={2.4} />
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{it.label}</span>
+                </button>
+              ))}
+              {dayItems.length > 3 && <div style={{ fontSize: 9, color: C.faint }}>+{dayItems.length - 3} more</div>}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -827,6 +902,7 @@ export default function App() {
       {menuOpen && <div onClick={() => setMenuOpen(null)} style={{ position: "fixed", inset: 0, zIndex: 55 }} />}
 
       {section === "home" && <HomeSection home={home} api={homeApi} ctx={ctx} isMobile={isMobile} />}
+      {section === "calendar" && <CalendarSection ctx={ctx} />}
       {section === "projects" && (
       <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
         {!isMobile && (
