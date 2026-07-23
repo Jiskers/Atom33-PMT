@@ -126,7 +126,7 @@ export default function App() {
   const file = previewOf ? null : files[active];
   const previewFile = previewOf ? files[previewOf] : null;
   const view = file ? FILE_VIEWS[file.view] : null;
-  const isBoard = file?.view === "core:board";
+  const supportsModules = !!view?.modules;
   const zoomable = !!view?.zoomable;
   const zoom = zoomable ? file.settings.zoom ?? 1 : 1;
   const pan = zoomable ? file.settings.pan ?? { x: 0, y: 0 } : { x: 0, y: 0 };
@@ -448,8 +448,8 @@ export default function App() {
   });
 
   const addModule = (type, x = 100, y = 100) => {
-    if (!file) return say("Open a board file first");
-    if (!isBoard) return say(`Modules pin to board views — this tab is a ${view.label}`);
+    if (!file) return say("Open a board or home file first");
+    if (!supportsModules) return say(`Modules don't pin to ${view.label} tabs`);
     updateFile(active, { modules: [...file.modules, makeModule(type, x, y)] });
     setDrawer(null);
   };
@@ -519,7 +519,7 @@ export default function App() {
   };
 
   /* ---- menus ---- */
-  const selExists = isBoard && file?.modules.some((m) => m.id === selectedMod);
+  const selExists = supportsModules && file?.modules.some((m) => m.id === selectedMod);
   const patchSel = (patch) => updateFile(active, { modules: file.modules.map((m) => (m.id === selectedMod ? { ...m, ...patch } : m)) });
   const fileItems = [
     { label: "New project…", act: newProject },
@@ -543,7 +543,7 @@ export default function App() {
     { label: "Straighten module", act: () => patchSel({ rot: 0 }), dis: !selExists },
     { label: "Delete module", act: () => { updateFile(active, { modules: file.modules.filter((m) => m.id !== selectedMod) }); setSelectedMod(null); setSettingsFor(null); }, dis: !selExists },
     { sep: true },
-    { label: "Clear board", act: () => updateFile(active, { modules: [] }), dis: !isBoard },
+    { label: "Clear modules", act: () => updateFile(active, { modules: [] }), dis: !supportsModules },
   ];
   const viewItems = [
     { label: "Zoom in", act: () => setZoom((z) => z * 1.2), dis: !zoomable },
@@ -581,23 +581,31 @@ export default function App() {
     <>
       <div style={{ flex: isMobile ? "unset" : "1 1 52%", overflowY: "auto", padding: "12px 10px", minHeight: 0, display: isMobile && drawer !== "modules" ? "none" : "block" }}>
         <div style={{ fontSize: 9.5, letterSpacing: 1.6, textTransform: "uppercase", color: C.faint, fontFamily: MONO, padding: "0 4px 8px" }}>
-          {isMobile ? "modules — tap to pin to the board" : "modules — drag onto the board"}
+          {isMobile ? "modules — tap to pin" : "modules — drag onto the canvas"}
         </div>
-        {Object.entries(MODULE_TYPES).map(([type, t], i) => (
-          <div key={type} draggable={!isMobile}
-            onDragStart={(e) => e.dataTransfer.setData("module", type)}
-            onClick={() => addModule(type, 90 + i * 34, 80 + i * 30)}
-            style={{ display: "flex", gap: 10, alignItems: "center", padding: "11px 10px", marginBottom: 6, background: C.panel2, border: `1px solid ${C.line}`, borderRadius: 7, cursor: isMobile ? "pointer" : "grab" }}>
-            <div style={{ width: 26, height: 26, borderRadius: 5, background: STICKY[i % 4], flexShrink: 0, boxShadow: "0 2px 4px rgba(0,0,0,.4)", transform: `rotate(${i % 2 ? 3 : -3}deg)` }} />
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 12.5, fontWeight: 600 }}>{t.label}</div>
-              <div style={{ fontSize: 10.5, color: C.faint, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.desc}</div>
+        {supportsModules ? (
+          <>
+            {Object.entries(MODULE_TYPES).map(([type, t], i) => (
+              <div key={type} draggable={!isMobile}
+                onDragStart={(e) => e.dataTransfer.setData("module", type)}
+                onClick={() => addModule(type, 90 + i * 34, 80 + i * 30)}
+                style={{ display: "flex", gap: 10, alignItems: "center", padding: "11px 10px", marginBottom: 6, background: C.panel2, border: `1px solid ${C.line}`, borderRadius: 7, cursor: isMobile ? "pointer" : "grab" }}>
+                <div style={{ width: 26, height: 26, borderRadius: 5, background: STICKY[i % 4], flexShrink: 0, boxShadow: "0 2px 4px rgba(0,0,0,.4)", transform: `rotate(${i % 2 ? 3 : -3}deg)` }} />
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 600 }}>{t.label}</div>
+                  <div style={{ fontSize: 10.5, color: C.faint, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.desc}</div>
+                </div>
+              </div>
+            ))}
+            <div style={{ fontSize: 10.5, color: C.faint, padding: "8px 4px 0", lineHeight: 1.5 }}>
+              Modules and views are plugins — everything here registers through the same contracts community add-ons would use.
             </div>
+          </>
+        ) : (
+          <div style={{ fontSize: 11.5, color: C.faint, padding: "8px 4px 0", lineHeight: 1.5 }}>
+            {file ? `${view.label} tabs don't use pinned modules.` : "Open a board or home file to pin modules."}
           </div>
-        ))}
-        <div style={{ fontSize: 10.5, color: C.faint, padding: "8px 4px 0", lineHeight: 1.5 }}>
-          Modules and views are plugins — everything here registers through the same contracts community add-ons would use.
-        </div>
+        )}
       </div>
       <div
         onDragOver={(e) => e.preventDefault()}

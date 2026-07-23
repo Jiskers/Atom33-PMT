@@ -139,6 +139,7 @@ registerView("core:board", {
   color: "#E8C87A",
   zoomable: true,
   canvas: true,
+  modules: true,
   version: 3,
   migrate: (data, fromVersion) => {
     // migrations.js calls this once per version step (fromVersion -> +1),
@@ -148,5 +149,20 @@ registerView("core:board", {
     return data;
   },
   create: () => ({ settings: { grid: true, tone: "slate", zoom: 1, pan: { x: 0, y: 0 }, canvasW: CANVAS_W, canvasH: CANVAS_H }, modules: [] }),
+  Component: BoardView,
+});
+
+/* Home: same free-pin canvas mechanic as board, under its own
+   identity — a dashboard/landing page you build out of modules
+   rather than a scratch board. */
+registerView("core:home", {
+  label: "home",
+  icon: I.home,
+  color: "#8FD9C4",
+  zoomable: true,
+  canvas: true,
+  modules: true,
+  newName: "Home",
+  create: () => ({ settings: { grid: false, tone: "cork", zoom: 1, pan: { x: 0, y: 0 }, canvasW: CANVAS_W, canvasH: CANVAS_H }, modules: [] }),
   Component: BoardView,
 });

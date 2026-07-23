@@ -12,6 +12,7 @@ export const I = {
   chev: "M5 3l5 5-5 5",
   folder: "M1.5 4.5h4l1.5 2h7.5v6.5h-13z",
   board: "M2 2h5v5H2zM9 2h5v7H9zM2 9h5v5H2zM9 11h5v3H9z",
+  home: "M2 8L8 2.5L14 8M3.5 6.5V13.5H12.5V6.5M6.5 13.5V9.5H9.5V13.5",
   kanban: "M2 2h3.5v12H2zM6.5 2H10v8H6.5zM11 2h3.5v10H11z",
   sheet: "M2 2.5h12v11H2zM2 6h12M2 9.5h12M6.5 2.5v11M10.5 2.5v11",
   pencil: "M3 13.5v-2.6L10.9 3l2.6 2.6-7.9 7.9zM9.4 4.5L12 7",

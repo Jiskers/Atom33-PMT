@@ -42,6 +42,11 @@
      zoomable:  bool         core provides zoom UI + gestures
      canvas:    bool         core wraps it in the fixed-size,
                              scalable, toned/grid canvas
+     modules:   bool?        this view accepts pinned MODULE_TYPES
+                             instances (file.modules / makeModule
+                             from views/board.jsx) — the rail's
+                             module palette only shows/drags for
+                             views that opt in
      fixed:     bool?        view manages its own scrolling
                              (core disables outer scroll)
      newName:   string?      default filename (else "untitled <label>")
