@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Privacy Policy — devboard</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22><rect width=%2216%22 height=%2216%22 rx=%223%22 fill=%22%23131519%22/><path d=%22M2 2h5v5H2zM9 2h5v7H9zM2 9h5v5H2zM9 11h5v3H9z%22 fill=%22none%22 stroke=%22%23E8C87A%22 stroke-width=%221.6%22 stroke-linejoin=%22round%22/></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="wrap">
+    <a href="index.html" class="brand"><span class="dot"></span>devboard</a>
+    <div class="nav-links">
+      <a href="features.html">Features</a>
+      <a href="releases.html">Releases</a>
+      <a href="https://github.com/Jiskers/Atom33-PMT" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <div class="nav-cta">
+      <a href="releases.html" class="btn btn-primary btn-sm">Download</a>
+    </div>
+    <button class="nav-burger" aria-label="Menu" id="burger">
+      <svg class="icon" viewBox="0 0 16 16" width="18" height="18"><path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/></svg>
+    </button>
+  </div>
+</nav>
+
+<div class="legal">
+  <h1>Privacy Policy</h1>
+  <div class="updated">Last updated: July 2026</div>
+
+  <div class="notice">
+    <strong>Not legal advice.</strong> This is a plain-language template describing what
+    devboard actually does today, written for a local-first app with no account system and no
+    analytics. It has not been reviewed by a lawyer. If devboard adds accounts, cloud sync, or
+    analytics, this policy needs a real rewrite (and likely a compliance review) before that
+    ships — see section 6.
+  </div>
+
+  <h2>1. The short version</h2>
+  <p>devboard doesn't collect your project data, doesn't require an account, and doesn't run
+  analytics or telemetry. Everything you create — boards, notes, kanban cards, sheets,
+  drawings, code — stays on your own device.</p>
+
+  <h2>2. What we don't collect</h2>
+  <ul>
+    <li>We don't collect your name, email, or any personal information — devboard doesn't ask for any.</li>
+    <li>We don't collect or transmit your project content. It never leaves your device.</li>
+    <li>We don't run analytics, ad tracking, or usage telemetry in the desktop app.</li>
+  </ul>
+
+  <h2>3. Where your data actually lives</h2>
+  <p>The desktop app stores your projects as local files in your system's application data
+  folder. The web build (if you're using it in a browser instead of the desktop app) stores
+  projects in your browser's local storage. In both cases, that data is under your control —
+  uninstalling the app or clearing that storage removes it.</p>
+
+  <h2>4. Network requests the app does make</h2>
+  <p>The desktop app makes exactly one kind of outbound request on its own: it periodically
+  checks a public GitHub endpoint to see if a newer version is available. This request doesn't
+  include your project content, an account identifier, or anything else about you beyond what
+  any HTTP request inherently carries (like your IP address, visible to GitHub as the host —
+  not to us).</p>
+
+  <h2>5. This website</h2>
+  <p>This marketing site loads fonts from Google Fonts and, on the Releases page, fetches
+  public release data from the GitHub API in your browser. Both are third-party requests made
+  directly by your browser to Google and GitHub respectively, subject to their own privacy
+  policies — this site itself doesn't run analytics or set tracking cookies.</p>
+
+  <h2>6. Future account-based features</h2>
+  <p>We plan to eventually offer optional sign-in (for example, via Google) enabling features
+  like cloud sync. Those features will be opt-in and off by default, and this policy will be
+  rewritten — with a clear explanation of exactly what data is involved — before any such
+  feature ships. Nothing described in this section exists in the current version.</p>
+
+  <h2>7. Children's privacy</h2>
+  <p>devboard is not directed at children under 13 and we don't knowingly collect information
+  from them — in practice, since we don't collect personal information from anyone, this is
+  largely moot for the current version of the app.</p>
+
+  <h2>8. Your control over your data</h2>
+  <p>Because your data lives entirely on your own device, you have complete control over it —
+  back it up, move it, or delete it by managing your local files or browser storage directly.
+  There's no account for us to delete on our end, because there's no account.</p>
+
+  <h2>9. Changes to this policy</h2>
+  <p>We'll update the "Last updated" date above whenever this policy changes, and we'll flag
+  any material change (especially anything involving new data collection) prominently rather
+  than silently.</p>
+
+  <h2>10. Contact</h2>
+  <p>Questions about this policy can be raised as an issue on the
+  <a href="https://github.com/Jiskers/Atom33-PMT" target="_blank" rel="noopener">GitHub repository</a>.</p>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-bottom" style="border-top:none; margin-top:0; padding-top:0;">
+      <span>© 2026 devboard. All rights reserved.</span>
+      <div class="footer-cols" style="gap:20px;">
+        <a href="index.html" style="font-size:13px;color:var(--dim);text-decoration:none;">Home</a>
+        <a href="terms.html" style="font-size:13px;color:var(--dim);text-decoration:none;">Terms</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

@@ -19,6 +19,22 @@ That's the whole app, running with real persistence (localStorage for now — se
 
 ---
 
+## Marketing site (`/website`)
+
+A separate, plain HTML/CSS/JS static site — no build step, no framework, deploy the folder
+as-is to any static host or VPS. Same design tokens as the app (`website/style.css` mirrors
+`src/core/theme.js`) and every screenshot is a CSS/HTML recreation of the real UI, not a raster
+image, so it stays crisp and cheap to update. The Releases page fetches
+`api.github.com/repos/Jiskers/Atom33-PMT/releases` client-side — nothing to keep in sync by
+hand. Terms/Privacy are honest drafts for the app's current no-account, local-first state, not
+reviewed by a lawyer — see the notice on each page.
+
+```bash
+npx serve website -l 4173   # → http://localhost:4173
+```
+
+---
+
 ## Architecture
 
 ```

@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Features — devboard</title>
+<meta name="description" content="Every page type, module, and dashboard widget in devboard — boards, kanban, spreadsheets, drawing, code, Home, Calendar, and the plugin system underneath all of it." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22><rect width=%2216%22 height=%2216%22 rx=%223%22 fill=%22%23131519%22/><path d=%22M2 2h5v5H2zM9 2h5v7H9zM2 9h5v5H2zM9 11h5v3H9z%22 fill=%22none%22 stroke=%22%23E8C87A%22 stroke-width=%221.6%22 stroke-linejoin=%22round%22/></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Caveat:wght@500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="wrap">
+    <a href="index.html" class="brand"><span class="dot"></span>devboard</a>
+    <div class="nav-links">
+      <a href="features.html" class="active">Features</a>
+      <a href="releases.html">Releases</a>
+      <a href="https://github.com/Jiskers/Atom33-PMT" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <div class="nav-cta">
+      <a href="releases.html" class="btn btn-ghost btn-sm">Changelog</a>
+      <a href="releases.html" class="btn btn-primary btn-sm">Download</a>
+    </div>
+    <button class="nav-burger" aria-label="Menu" id="burger">
+      <svg class="icon" viewBox="0 0 16 16" width="18" height="18"><path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/></svg>
+    </button>
+  </div>
+</nav>
+
+<header class="hero" style="padding:64px 0 20px;">
+  <div class="wrap" style="text-align:center;">
+    <div class="eyebrow" style="justify-content:center">features</div>
+    <h1 style="font-size:clamp(30px,4.5vw,46px);">Every page you'd normally<br />bounce between five apps for.</h1>
+    <p class="lead" style="margin:18px auto 0;">
+      Boards, kanban, spreadsheets, drawing, and code — plus a dashboard and calendar built
+      out of the exact same plugin contracts a community add-on would use.
+    </p>
+  </div>
+</header>
+
+<div class="wrap"><div class="divider"></div></div>
+
+<section class="section">
+  <div class="wrap">
+    <div class="dive-row" style="padding-top:0;">
+      <div class="dive-copy">
+        <div class="eyebrow">boards</div>
+        <h2>A corkboard that never runs out of room.</h2>
+        <p>Pin sticky notes, reference palettes, and mechanic cards anywhere on a zoomable, resizable canvas — pan, zoom, and pinch just like a real board. Lock a module in place once it's final, rotate it for that pinned-up feel, or straighten it back out in one click.</p>
+        <ul class="dive-list">
+          <li>Four canvas sizes, from a tight jam board to a huge planning wall</li>
+          <li>Per-module settings — swatch colors, hide-completed toggles, status pills</li>
+          <li>Everything autosaves and survives a reload, mid-drag</li>
+        </ul>
+      </div>
+      <div class="dive-visual">
+        <div class="mockup">
+          <div class="mockup-chrome"><span class="mdot"></span><span class="mdot"></span><span class="mdot"></span><span class="mtitle">quest ideas — board</span></div>
+          <div class="mockup-body" style="min-height:280px;">
+            <div class="mockup-canvas" style="flex:1;">
+              <div class="m-note" style="left:10px; top:20px; width:130px; background:var(--sticky-3); transform:rotate(1.5deg);">what's the hook for the opening 10 minutes?</div>
+              <div class="m-card" style="left:150px; top:70px; transform:rotate(-1.2deg);">
+                <div class="m-kicker">reference</div>
+                <div style="display:flex; height:44px; border-radius:2px; overflow:hidden; margin-bottom:6px;">
+                  <div style="flex:1;background:#B34233"></div><div style="flex:1;background:#2E6E6A"></div><div style="flex:1;background:#E8C87A"></div>
+                </div>
+                <div class="m-sub" style="text-align:center;">mood: rust &amp; teal</div>
+              </div>
+              <div class="m-note" style="left:60px; top:180px; width:150px; background:var(--sticky-4); transform:rotate(-2deg);">playtest note: tutorial runs long, cut the lore dump</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dive-row reverse">
+      <div class="dive-copy">
+        <div class="eyebrow">game-dev module pack</div>
+        <h2>Built for the shape of an actual game project.</h2>
+        <p>Beyond sticky notes and checklists, devboard ships modules that already know what a game dev needs to track — a design doc outline, an asset pipeline, bugs with severity, and a dated playtest log.</p>
+        <ul class="dive-list">
+          <li><strong style="color:var(--text)">GDD outline</strong> — heading + notes sections you add on the fly</li>
+          <li><strong style="color:var(--text)">Asset pipeline</strong> — cycle each asset through concept → wip → final → in-engine</li>
+          <li><strong style="color:var(--text)">Bug report</strong> — severity pill, repro steps, open/fixed toggle</li>
+          <li><strong style="color:var(--text)">Playtest log</strong> — auto-dated running notes from every session</li>
+        </ul>
+      </div>
+      <div class="dive-visual">
+        <div class="mockup">
+          <div class="mockup-chrome"><span class="mdot"></span><span class="mdot"></span><span class="mdot"></span><span class="mtitle">bug report</span></div>
+          <div class="mockup-body" style="min-height:280px; align-items:center; justify-content:center;">
+            <div class="m-card" style="position:static; width:220px;">
+              <div class="m-kicker">bug</div>
+              <div class="m-title">Save corrupts after storm event</div>
+              <div class="m-sub" style="margin-bottom:8px;">Repro: trigger storm mid-save, reload → inventory resets.</div>
+              <span class="m-pill" style="background:#E8956B; color:var(--ink); margin-right:6px;">high</span>
+              <span class="m-pill" style="background:none; border:1px solid #00000030; color:var(--ink);">open</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dive-row">
+      <div class="dive-copy">
+        <div class="eyebrow">kanban</div>
+        <h2>Sprint boards, minus the per-seat pricing.</h2>
+        <p>Add, rename, delete, and reorder columns freely. Every card opens into a Trello-style detail panel — description, checklist with a live progress count, and pasted image references.</p>
+        <ul class="dive-list">
+          <li>Drag cards between columns, or use the move buttons on touch</li>
+          <li>Cycle a tag pill per card for quick filtering by eye</li>
+          <li>Flag any card "remind me on Home" with a due date</li>
+        </ul>
+      </div>
+      <div class="dive-visual">
+        <div class="mockup">
+          <div class="mockup-chrome"><span class="mdot"></span><span class="mdot"></span><span class="mdot"></span><span class="mtitle">sprint 3 — kanban</span></div>
+          <div class="mockup-body" style="min-height:280px; padding:14px;">
+            <div class="m-kanban">
+              <div class="m-kcol">
+                <div class="m-khead">Backlog <span>3</span></div>
+                <div class="m-kcard">Storm particle pass<br /><span class="m-ktag" style="background:var(--sticky-4);">art</span></div>
+                <div class="m-kcard">Vendor barter UI<br /><span class="m-ktag" style="background:var(--sticky-4);">ui</span></div>
+              </div>
+              <div class="m-kcol">
+                <div class="m-khead">In progress <span>2</span></div>
+                <div class="m-kcard">Quest chain: Dry Well<br /><span class="m-ktag" style="background:var(--sticky-1);">design</span></div>
+              </div>
+              <div class="m-kcol">
+                <div class="m-khead">Done <span>1</span></div>
+                <div class="m-kcard">Dust storm timer loop<br /><span class="m-ktag" style="background:var(--sticky-2);">code</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dive-row reverse">
+      <div class="dive-copy">
+        <div class="eyebrow">spreadsheets</div>
+        <h2>A real formula engine, not a checklist pretending to be one.</h2>
+        <p>Cell references, ranges, <code class="code">SUM()</code>, and the standard arithmetic operators — enough for a scope budget or a loot table without opening a whole other program. Resizable well past the original fixed grid.</p>
+        <ul class="dive-list">
+          <li>References update live as you edit source cells</li>
+          <li>Grows up to 26×200 cells per sheet</li>
+          <li>Formulas evaluate safely — no arbitrary code execution</li>
+        </ul>
+      </div>
+      <div class="dive-visual">
+        <div class="mockup">
+          <div class="mockup-chrome"><span class="mdot"></span><span class="mdot"></span><span class="mdot"></span><span class="mtitle">scope budget — sheet</span></div>
+          <div class="mockup-body" style="min-height:280px; align-items:center; padding:20px;">
+            <table style="width:100%; border-collapse:collapse; font-size:11px; font-family:var(--mono); color:var(--dim);">
+              <tr style="color:var(--faint);"><td style="padding:6px 8px; border:1px solid var(--line);"></td><td style="padding:6px 8px; border:1px solid var(--line);">Task</td><td style="padding:6px 8px; border:1px solid var(--line);">Hours</td><td style="padding:6px 8px; border:1px solid var(--line);">Cost</td></tr>
+              <tr><td style="padding:6px 8px; border:1px solid var(--line); color:var(--faint);">2</td><td style="padding:6px 8px; border:1px solid var(--line);">Storm VFX</td><td style="padding:6px 8px; border:1px solid var(--line);">12</td><td style="padding:6px 8px; border:1px solid var(--line);">300</td></tr>
+              <tr><td style="padding:6px 8px; border:1px solid var(--line); color:var(--faint);">3</td><td style="padding:6px 8px; border:1px solid var(--line);">Quest scripting</td><td style="padding:6px 8px; border:1px solid var(--line);">30</td><td style="padding:6px 8px; border:1px solid var(--line);">750</td></tr>
+              <tr><td style="padding:6px 8px; border:1px solid var(--line); color:var(--faint);">4</td><td style="padding:6px 8px; border:1px solid var(--line); color:var(--gold);">Total</td><td style="padding:6px 8px; border:1px solid var(--line);"></td><td style="padding:6px 8px; border:1px solid var(--line); color:var(--gold);">=SUM(D2:D3)</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dive-row">
+      <div class="dive-copy">
+        <div class="eyebrow">draw</div>
+        <h2>Freehand sketching, same canvas as your boards.</h2>
+        <p>Rough out a level layout or a UI mockup with a pressure-friendly pen tool, on the same zoomable, pannable, resizable canvas as everything else in the app.</p>
+        <ul class="dive-list">
+          <li>Color and stroke-size picker in a floating toolbar</li>
+          <li>Same toned backdrops and grid overlay as boards</li>
+        </ul>
+      </div>
+      <div class="dive-visual">
+        <div class="mockup">
+          <div class="mockup-chrome"><span class="mdot"></span><span class="mdot"></span><span class="mdot"></span><span class="mtitle">level sketch — draw</span></div>
+          <div class="mockup-body" style="min-height:280px; align-items:center; justify-content:center;">
+            <svg width="220" height="180" viewBox="0 0 220 180">
+              <path d="M40 100 Q30 60 70 50 Q120 30 160 55 Q200 80 180 120 Q160 160 110 150 Q60 145 40 100Z" fill="none" stroke="var(--text)" stroke-width="3" stroke-linecap="round"/>
+              <path d="M90 90 Q100 100 115 92" fill="none" stroke="var(--sticky-4)" stroke-width="2.5" stroke-linecap="round"/>
+              <path d="M140 70 L170 70 L165 62" fill="none" stroke="var(--sticky-3)" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dive-row reverse">
+      <div class="dive-copy">
+        <div class="eyebrow">code + run</div>
+        <h2>Write it, run it, right there.</h2>
+        <p>A code file with syntax-aware editing for HTML/CSS/JS/PHP, and a real Run button that opens a browser-chrome preview tab — good for devlog pages, small prototypes, or just testing a snippet.</p>
+        <ul class="dive-list">
+          <li>Linked stylesheets resolve automatically inside the preview</li>
+          <li>Preview opens as its own tab, doesn't disturb your open files</li>
+        </ul>
+      </div>
+      <div class="dive-visual">
+        <div class="mockup">
+          <div class="mockup-chrome"><span class="mdot"></span><span class="mdot"></span><span class="mdot"></span><span class="mtitle">index.html — code</span></div>
+          <div class="mockup-body" style="min-height:280px; padding:18px; font-family:var(--mono); font-size:11.5px; line-height:1.7; color:var(--dim);">
+            <div><span style="color:#E8956B;">&lt;h1&gt;</span>Dustfall devlog<span style="color:#E8956B;">&lt;/h1&gt;</span></div>
+            <div><span style="color:#E8956B;">&lt;p&gt;</span>Week 12 — the storm system finally works.<span style="color:#E8956B;">&lt;/p&gt;</span></div>
+            <div><span style="color:#E8956B;">&lt;button</span> <span style="color:#93C5E8;">onclick</span>=<span style="color:var(--sticky-2);">"toggleStorm()"</span><span style="color:#E8956B;">&gt;</span>toggle storm<span style="color:#E8956B;">&lt;/button&gt;</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow" style="justify-content:center">extensibility</div>
+      <h2>The built-ins use nothing a plugin couldn't.</h2>
+      <p class="lead" style="margin:14px auto 0;">Every module, view, and dashboard widget in devboard registers through the same three open contracts. There's no special core-only shortcut — a community add-on plays on exactly the same field.</p>
+    </div>
+    <div class="feature-grid" style="grid-template-columns:repeat(3,1fr);">
+      <div class="feature-card">
+        <div class="feature-icon"><svg class="icon" viewBox="0 0 16 16"><path d="M2 2h5v5H2zM9 2h5v7H9zM2 9h5v5H2zM9 11h5v3H9z"/></svg></div>
+        <h3><code class="code" style="font-size:14px;">registerModule</code></h3>
+        <p>Pinnable board content — a sticky note, a bug report, anything with its own data and a card body.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><svg class="icon" viewBox="0 0 16 16"><path d="M1.5 4.5h4l1.5 2h7.5v6.5h-13z"/></svg></div>
+        <h3><code class="code" style="font-size:14px;">registerView</code></h3>
+        <p>A whole new file type in the tree — board, kanban, sheet, draw, and code all register exactly this way.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><svg class="icon" viewBox="0 0 16 16"><path d="M2 8L8 2.5L14 8M3.5 6.5V13.5H12.5V6.5M6.5 13.5V9.5H9.5V13.5"/></svg></div>
+        <h3><code class="code" style="font-size:14px;">registerWidget</code></h3>
+        <p>A Home dashboard tile — gets read access to the whole project, not just its own data, unlike a module.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap center">
+    <h2>Multiple projects. Full undo history. Real migrations.</h2>
+    <p class="lead" style="margin:16px auto 0;">Switch between as many local projects as you want. Every edit is undoable. And when a module or view's data shape changes between versions, devboard migrates old saves forward automatically — nothing left behind on update.</p>
+    <div class="hero-actions" style="margin-top:32px;">
+      <a href="releases.html" class="btn btn-primary">Download the latest release</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <a href="index.html" class="brand"><span class="dot"></span>devboard</a>
+        <p style="margin-top:12px; max-width:240px; font-size:13px;">A modular, local-first project board for indie game devs.</p>
+      </div>
+      <div class="footer-cols">
+        <div class="footer-col">
+          <h4>Product</h4>
+          <a href="features.html">Features</a>
+          <a href="releases.html">Releases</a>
+          <a href="https://github.com/Jiskers/Atom33-PMT" target="_blank" rel="noopener">GitHub</a>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <a href="terms.html">Terms of Service</a>
+          <a href="privacy.html">Privacy Policy</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 devboard. All rights reserved.</span>
+      <span>Built with Tauri + React.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

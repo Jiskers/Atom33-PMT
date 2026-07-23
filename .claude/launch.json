@@ -7,6 +7,13 @@
       "runtimeArgs": ["run", "dev"],
       "port": 5173,
       "autoPort": false
+    },
+    {
+      "name": "devboard-website",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "website", "-l", "4173"],
+      "port": 4173,
+      "autoPort": false
     }
   ]
 }

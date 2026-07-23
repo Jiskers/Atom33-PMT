@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Releases — devboard</title>
+<meta name="description" content="Download the latest devboard release and see the full changelog, pulled live from GitHub." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22><rect width=%2216%22 height=%2216%22 rx=%223%22 fill=%22%23131519%22/><path d=%22M2 2h5v5H2zM9 2h5v7H9zM2 9h5v5H2zM9 11h5v3H9z%22 fill=%22none%22 stroke=%22%23E8C87A%22 stroke-width=%221.6%22 stroke-linejoin=%22round%22/></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Caveat:wght@500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="wrap">
+    <a href="index.html" class="brand"><span class="dot"></span>devboard</a>
+    <div class="nav-links">
+      <a href="features.html">Features</a>
+      <a href="releases.html" class="active">Releases</a>
+      <a href="https://github.com/Jiskers/Atom33-PMT" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <div class="nav-cta">
+      <a href="https://github.com/Jiskers/Atom33-PMT" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">GitHub</a>
+      <a href="#release-list" class="btn btn-primary btn-sm">Download</a>
+    </div>
+    <button class="nav-burger" aria-label="Menu" id="burger">
+      <svg class="icon" viewBox="0 0 16 16" width="18" height="18"><path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/></svg>
+    </button>
+  </div>
+</nav>
+
+<header class="hero" style="padding:64px 0 20px;">
+  <div class="wrap" style="text-align:center;">
+    <div class="eyebrow" style="justify-content:center">releases</div>
+    <h1 style="font-size:clamp(30px,4.5vw,46px);">Every release, straight from GitHub.</h1>
+    <p class="lead" style="margin:18px auto 0;">
+      This list is fetched live — nothing to keep in sync by hand. Installed devboard
+      auto-updates in place, so you generally only need this page for the changelog
+      or a fresh install.
+    </p>
+  </div>
+</header>
+
+<section class="section" style="padding-top:24px;">
+  <div class="wrap" style="max-width:760px;">
+    <div id="release-list">
+      <div class="release-loading">Loading releases from GitHub…</div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <a href="index.html" class="brand"><span class="dot"></span>devboard</a>
+        <p style="margin-top:12px; max-width:240px; font-size:13px;">A modular, local-first project board for indie game devs.</p>
+      </div>
+      <div class="footer-cols">
+        <div class="footer-col">
+          <h4>Product</h4>
+          <a href="features.html">Features</a>
+          <a href="releases.html">Releases</a>
+          <a href="https://github.com/Jiskers/Atom33-PMT" target="_blank" rel="noopener">GitHub</a>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <a href="terms.html">Terms of Service</a>
+          <a href="privacy.html">Privacy Policy</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 devboard. All rights reserved.</span>
+      <span>Built with Tauri + React.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
