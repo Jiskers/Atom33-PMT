@@ -166,12 +166,15 @@ The UI is already responsive (drawer nav, touch drag, pinch zoom, bottom tabs) a
 - [x] Board + draw: adjustable canvas/workspace size — 4 presets (Compact/Default/Large/Huge) in the View menu, per file. Resizing is non-destructive; content outside the new bounds just loses the toned backdrop, nothing is clipped
 - [x] Game-dev module pack: GDD outline, asset pipeline tracker, bug report, playtest log
 - [x] Persistent left nav rail (Home / Projects / Calendar now; Reports, People, Chat, search, settings, and profile are placeholder chips for later — group projects, chat, subscriptions) — Projects is exactly the pre-rail app; today's file tree + module palette live under it
-- [x] New "Home" section: a real dashboard, not a file — a `registerWidget`/`WIDGET_TYPES` plugin category (parallel to modules, own contract in `core/registry.js`) rendered on a snug 4-column grid instead of board's free-pin canvas. Widgets get the same `ctx` a view gets, so they can read/open project files instead of only holding their own data. Ships with three: Quick jump (file list, click to open), Reminders (below), and Note (freeform text)
+- [x] New "Home" section: a real dashboard, not a file — a `registerWidget`/`WIDGET_TYPES` plugin category (parallel to modules, own contract in `core/registry.js`) rendered on a snug 4-column grid instead of board's free-pin canvas. Widgets get the same `ctx` a view gets, so they can read/open project files instead of only holding their own data. Ships with four: Quick jump (file list, click to open), Reminders (below), Note (freeform text), and Pinned files (hand-pick specific files, group them into folders you name)
 - [x] Flagging mechanic: any board module and any kanban card can be marked "Remind me on Home" (with an optional due date) from its settings/detail panel — flagged items get a small flag badge where they live, and the Reminders widget lists every flagged item across the project, soonest due date first, overdue ones in red, click to jump to the file
 - [x] Calendar section (replaces the placeholder "Everything" rail slot): a local month-view grid plotting every flagged module/card by due date, same underlying data as the Reminders widget via a shared `core/reminders.js` helper — prev/next month, jump to today, click an item to open its file. Google Calendar sync is intentionally not this — it's a Phase 4 idea that needs real sign-in first
+- [x] Resizable modules: a corner drag handle (shown alongside the settings/remove buttons on hover) sets a per-instance width override, independent of the module type's default — height stays content-driven
+- [x] File/photo attachments on any module: a settings-panel file picker stores the file as a data URL on the instance (5MB cap — it lives inline in the file's own JSON, same as everywhere else in the storage model). Images render as an inline thumbnail; other files show a small paperclip chip. Either opens a lightbox/download popup on click
+- [x] Investigation-board string connections: a toolbar toggle (thumbtack icon) arms "connect mode" — click one pin, then a second, and a red string (SVG, sags like real string) draws between them; mode exits automatically after the pair completes. Click a string to remove it (undoable, like everything else). `file.connections` is a flat `{id, a, b}` array, schema v4
 - [ ] php-wasm runtime so Run works for .php
 - [ ] Stable plugin API + docs → community modules/views
-- [ ] Board links (pin a file onto a board), search across project
+- [ ] Board links (pin a file onto a board — distinct from Home's Pinned files widget above), search across project
 
 ## Known gaps (honest list)
 
@@ -184,3 +187,7 @@ The UI is already responsive (drawer nav, touch drag, pinch zoom, bottom tabs) a
 - The Reminders widget guesses a flagged module's display label from common data field names (`title`/`name`/`caption`/`text`), falling back to the module's own label — a module with none of those fields shows its type name, not its actual content
 - Calendar is read-only (jump to a file, can't create/edit a reminder from the grid directly) and shows only single-day due dates — no ranges, no recurring reminders
 - Flag/due are plain fields on the module or card instance, not versioned/migrated data — safe today since they're optional and additive, but a future breaking change to that shape would need real migration, unlike module `data`
+- Attachments are capped at 5MB and stored as a data URL inline in the file's own JSON (same model as everywhere else) — fine for images/small docs, a bad fit for anything larger; there's no separate blob storage
+- Module resize is width-only; height stays content-driven the same way it always has (most module bodies weren't built to respect a fixed height)
+- String connections and the resize handle both ignore a module's rotation when computing pin/corner position — invisible at the small rotations modules actually get (±2°), but a heavily-rotated module would show a small visual offset
+- Pinned files' "folders" are freeform text typed per-pin, not a managed list — renaming a folder means retyping it on every pin in it, one at a time
